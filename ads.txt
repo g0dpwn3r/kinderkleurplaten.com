@@ -1,0 +1,4 @@
+# Placeholder ads.txt for kinderkleurplaten.com
+# This file will be updated when AdSense is approved
+# Google AdSense requires this file for ad verification
+# Contact: admin@kinderkleurplaten.com

@@ -1,0 +1,834 @@
+/*
+Theme Name: Kinderkleurplaten
+Theme URI: https://kinderkleurplaten.nl
+Description: Een vrolijk, kleurrijk en kindvriendelijk WordPress-thema voor een website met gratis kleurplaten voor kinderen.
+Version: 1.0.0
+Requires at least: 6.4
+Requires PHP: 7.4
+Author: Kinderkleurplaten.nl
+Author URI: https://kinderkleurplaten.nl
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: kinderkleurplaten
+Tags: custom-logo, featured-images, threaded-comments, translation-ready
+*/
+
+:root {
+	--kk-pink: #ff6b9d;
+	--kk-pink-dark: #e84d83;
+	--kk-yellow: #ffd166;
+	--kk-blue: #4cc9f0;
+	--kk-green: #72efb2;
+	--kk-purple: #b8a7ff;
+	--kk-ink: #243042;
+	--kk-muted: #667085;
+	--kk-white: #ffffff;
+	--kk-bg: #fff8fb;
+	--kk-border: rgba(36, 48, 66, 0.12);
+	--kk-shadow: 0 18px 45px rgba(255, 107, 157, 0.16);
+	--kk-radius: 28px;
+	--kk-container: 1180px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	color: var(--kk-ink);
+	background:
+		radial-gradient(circle at top left, rgba(255, 209, 102, 0.28), transparent 32rem),
+		radial-gradient(circle at top right, rgba(76, 201, 240, 0.24), transparent 30rem),
+		var(--kk-bg);
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	line-height: 1.65;
+}
+
+img,
+svg {
+	max-width: 100%;
+	height: auto;
+}
+
+a {
+	color: var(--kk-pink-dark);
+	text-decoration-thickness: 0.12em;
+	text-underline-offset: 0.18em;
+}
+
+a:hover,
+a:focus {
+	color: var(--kk-blue);
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+.container {
+	width: min(100% - 2rem, var(--kk-container));
+	margin-inline: auto;
+}
+
+.skip-link {
+	position: absolute;
+	left: 1rem;
+	top: -10rem;
+	z-index: 999;
+	padding: 0.75rem 1rem;
+	border-radius: 999px;
+	background: var(--kk-ink);
+	color: var(--kk-white);
+}
+
+.skip-link:focus {
+	top: 1rem;
+}
+
+.site-header {
+	position: sticky;
+	top: 0;
+	z-index: 100;
+	background: rgba(255, 255, 255, 0.9);
+	backdrop-filter: blur(16px);
+	border-bottom: 1px solid var(--kk-border);
+}
+
+.header-inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+	padding: 1rem 0;
+}
+
+.site-branding {
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+	min-width: 0;
+}
+
+.custom-logo {
+	width: 58px;
+	height: 58px;
+	flex: 0 0 auto;
+	border-radius: 18px;
+	background: linear-gradient(135deg, var(--kk-pink), var(--kk-yellow), var(--kk-blue));
+	box-shadow: 0 10px 24px rgba(36, 48, 66, 0.12);
+}
+
+.site-title,
+.site-description {
+	margin: 0;
+}
+
+.site-title {
+	font-size: clamp(1.35rem, 2.6vw, 2rem);
+	font-weight: 900;
+	letter-spacing: -0.04em;
+	line-height: 1;
+}
+
+.site-title a {
+	color: var(--kk-pink-dark);
+	text-decoration: none;
+}
+
+.site-description {
+	color: var(--kk-muted);
+	font-size: 0.95rem;
+}
+
+.primary-navigation ul {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.35rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.primary-navigation a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0.55rem 0.9rem;
+	border-radius: 999px;
+	color: var(--kk-ink);
+	font-weight: 800;
+	text-decoration: none;
+}
+
+.primary-navigation a:hover,
+.primary-navigation .current-menu-item > a,
+.primary-navigation .current_page_item > a {
+	background: rgba(255, 107, 157, 0.12);
+	color: var(--kk-pink-dark);
+}
+
+.site-main {
+	padding: 2rem 0 4rem;
+}
+
+.hero {
+	position: relative;
+	overflow: hidden;
+	margin: 1rem 0 2rem;
+	padding: clamp(2rem, 7vw, 5rem) 0;
+	border: 1px solid rgba(255, 107, 157, 0.18);
+	border-radius: clamp(28px, 5vw, 48px);
+	background: linear-gradient(135deg, rgba(255, 107, 157, 0.16), rgba(76, 201, 240, 0.14)), #fff;
+	box-shadow: var(--kk-shadow);
+}
+
+.hero-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+	gap: 2rem;
+	align-items: center;
+}
+
+.eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0 0 1rem;
+	padding: 0.35rem 0.75rem;
+	border-radius: 999px;
+	background: rgba(255, 209, 102, 0.4);
+	color: #7a4b00;
+	font-weight: 900;
+}
+
+.hero h1,
+.page-title,
+.entry-title,
+.archive-title {
+	margin: 0;
+	color: var(--kk-ink);
+	font-size: clamp(2.2rem, 7vw, 5rem);
+	line-height: 0.95;
+	letter-spacing: -0.07em;
+}
+
+.hero h1 span,
+.gradient-text {
+	color: var(--kk-pink-dark);
+}
+
+.hero p,
+.entry-summary,
+.archive-description,
+.page-content p {
+	color: var(--kk-muted);
+	font-size: 1.12rem;
+}
+
+.hero-actions,
+.entry-actions,
+.pagination {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.85rem;
+	align-items: center;
+}
+
+.button,
+.wp-block-button__link,
+button.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 48px;
+	padding: 0.75rem 1.15rem;
+	border: 0;
+	border-radius: 999px;
+	background: var(--kk-pink);
+	color: var(--kk-white);
+	box-shadow: 0 10px 20px rgba(255, 107, 157, 0.22);
+	font-weight: 900;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.button--secondary {
+	background: var(--kk-blue);
+	color: #07516a;
+	box-shadow: 0 10px 20px rgba(76, 201, 240, 0.22);
+}
+
+.button--ghost {
+	background: var(--kk-white);
+	color: var(--kk-pink-dark);
+	border: 1px solid rgba(255, 107, 157, 0.25);
+	box-shadow: none;
+}
+
+.hero-card {
+	padding: 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.8);
+	border-radius: var(--kk-radius);
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.08);
+}
+
+.hero-card img {
+	display: block;
+	width: 100%;
+	border-radius: 24px;
+	background: var(--kk-white);
+}
+
+.section {
+	margin: 3.5rem 0;
+}
+
+.section-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.4rem;
+}
+
+.section-title {
+	margin: 0;
+	font-size: clamp(1.8rem, 4vw, 3rem);
+	line-height: 1;
+	letter-spacing: -0.05em;
+}
+
+.section-lead {
+	max-width: 680px;
+	margin: 0.5rem 0 0;
+	color: var(--kk-muted);
+}
+
+.category-grid,
+.posts-grid,
+.kk-gallery {
+	display: grid;
+	gap: 1.25rem;
+}
+
+.category-grid,
+.posts-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.kk-gallery {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.category-card,
+.post-card,
+.kk-gallery-card,
+.info-card {
+	position: relative;
+	overflow: hidden;
+	padding: 1.25rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 22px;
+	background: rgba(255, 255, 255, 0.86);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.08);
+}
+
+.category-card::before,
+.post-card::before,
+.kk-gallery-card::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto;
+	height: 8px;
+	background: linear-gradient(90deg, var(--kk-pink), var(--kk-yellow), var(--kk-blue), var(--kk-green));
+}
+
+.category-card h3,
+.post-card h3,
+.kk-gallery-card h3,
+.info-card h3 {
+	margin: 0.8rem 0 0.35rem;
+	font-size: 1.25rem;
+	letter-spacing: -0.03em;
+}
+
+.category-card p,
+.post-card p,
+.kk-gallery-card p,
+.info-card p {
+	margin: 0;
+	color: var(--kk-muted);
+}
+
+.post-card img,
+.kk-gallery-card img {
+	display: block;
+	width: 100%;
+	margin-top: 0.75rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 16px;
+	background: var(--kk-white);
+}
+
+.post-card a,
+.kk-gallery-card a {
+	font-weight: 900;
+}
+
+.kk-gallery-card {
+	text-align: center;
+}
+
+.kk-gallery-card a {
+	display: block;
+}
+
+/* Featured grid and card styles */
+.featured-grid {
+	display: grid;
+	gap: 1.25rem;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.featured-card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 1rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 22px;
+	background: rgba(255, 255, 255, 0.86);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.08);
+	text-align: center;
+}
+
+.featured-card__image {
+	display: block;
+	margin-bottom: 0.75rem;
+}
+
+.featured-card img {
+	display: block;
+	width: 100%;
+	border: 1px solid var(--kk-border);
+	border-radius: 16px;
+	background: var(--kk-white);
+}
+
+.featured-card h3 {
+	margin: 0 0 0.35rem;
+	font-size: 1.25rem;
+	font-weight: 800;
+	letter-spacing: -0.03em;
+}
+
+.featured-card__meta {
+	margin: 0 0 0.75rem;
+	color: var(--kk-muted);
+	font-size: 0.95rem;
+}
+
+.card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+	margin-top: auto;
+	padding-top: 0.5rem;
+}
+
+.info-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.25rem;
+}
+
+.info-card {
+	border-top: 6px solid var(--kk-yellow);
+}
+
+.entry {
+	margin: 2rem 0;
+	padding: clamp(1.25rem, 4vw, 2.5rem);
+	border: 1px solid var(--kk-border);
+	border-radius: var(--kk-radius);
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.08);
+}
+
+.entry-header {
+	margin-bottom: 1.25rem;
+}
+
+.entry-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+	color: var(--kk-muted);
+	font-size: 0.95rem;
+}
+
+.entry-meta a {
+	font-weight: 800;
+}
+
+.entry-content {
+	font-size: 1.08rem;
+}
+
+.entry-content p {
+	margin: 0 0 1rem;
+}
+
+.colouring-page-frame {
+	display: grid;
+	grid-template-columns: minmax(0, 0.95fr) minmax(280px, 0.75fr);
+	gap: 2rem;
+	align-items: start;
+	margin: 1.5rem 0;
+	padding: 1rem;
+	border: 1px solid var(--kk-border);
+	border-radius: var(--kk-radius);
+	background: var(--kk-white);
+}
+
+.colouring-page-frame img {
+	width: 100%;
+	border-radius: 18px;
+	background: var(--kk-white);
+}
+
+.download-panel {
+	padding: 1.25rem;
+	border-radius: 22px;
+	background: linear-gradient(135deg, rgba(255, 107, 157, 0.12), rgba(76, 201, 240, 0.12));
+}
+
+.download-panel ul {
+	padding-left: 1.2rem;
+	color: var(--kk-muted);
+}
+
+.breadcrumbs {
+	margin: 0 0 1.5rem;
+	color: var(--kk-muted);
+	font-size: 0.95rem;
+}
+
+.breadcrumbs a {
+	font-weight: 800;
+}
+
+.pagination {
+	margin-top: 2rem;
+}
+
+.pagination a,
+.pagination span {
+	display: inline-flex;
+	min-height: 44px;
+	align-items: center;
+	padding: 0.55rem 0.9rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 999px;
+	background: var(--kk-white);
+	font-weight: 900;
+	text-decoration: none;
+}
+
+.pagination .current {
+	border-color: var(--kk-pink);
+	background: var(--kk-pink);
+	color: var(--kk-white);
+}
+
+.site-footer {
+	margin-top: 3rem;
+	padding: 2.5rem 0;
+	background: var(--kk-white);
+	border-top: 1px solid var(--kk-border);
+}
+
+.footer-inner {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 1rem;
+	color: var(--kk-muted);
+}
+
+.footer-inner a {
+	font-weight: 900;
+}
+
+.error-card {
+	max-width: 720px;
+	margin: 3rem auto;
+	padding: clamp(1.5rem, 5vw, 3rem);
+	border: 1px solid var(--kk-border);
+	border-radius: var(--kk-radius);
+	background: var(--kk-white);
+	text-align: center;
+	box-shadow: var(--kk-shadow);
+}
+
+.search-form {
+	display: flex;
+	gap: 0.75rem;
+	margin: 1.5rem 0;
+}
+
+.search-form input[type="search"] {
+	flex: 1;
+	min-width: 0;
+	padding: 0.8rem 1rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 999px;
+}
+
+@media (max-width: 980px) {
+	.hero-grid,
+	.colouring-page-frame {
+		grid-template-columns: 1fr;
+	}
+
+	.category-grid,
+	.posts-grid,
+	.info-grid,
+	.featured-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.kk-gallery {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 720px) {
+	.header-inner {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.primary-navigation ul {
+		justify-content: flex-start;
+	}
+
+	.category-grid,
+	.posts-grid,
+	.info-grid,
+	.kk-gallery,
+	.featured-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.section-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.search-form {
+		flex-direction: column;
+	}
+}
+
+@media print {
+	body {
+		background: var(--kk-white);
+	}
+
+	.site-header,
+	.site-footer,
+	.entry-actions,
+	.download-panel,
+	.pagination,
+	.breadcrumbs,
+	.hero-actions {
+		display: none !important;
+	}
+
+	.site-main {
+		padding: 0;
+	}
+
+	.entry,
+	.colouring-page-frame {
+		display: block;
+		padding: 0;
+		margin: 0;
+		border: 0;
+		box-shadow: none;
+	}
+
+}
+
+/* ========================================
+   Kinderkleurplaten Wereld - Print Styles
+   Enhanced print functionality for coloring pages
+======================================== */
+
+/* Print styles for individual coloring page printouts */
+@media print {
+	/* Hide all website UI elements when printing */
+	body {
+		background: var(--kk-white);
+		color: var(--kk-ink);
+		font-size: 12pt;
+		line-height: 1.4;
+	}
+
+	.site-header,
+	.site-footer,
+	.primary-navigation,
+	.hero-actions,
+	.entry-actions,
+	.download-panel,
+	.pagination,
+	.breadcrumbs,
+	.search-form,
+	.category-grid,
+	.posts-grid,
+	.featured-grid,
+	.info-grid {
+		display: none !important;
+	}
+
+	/* Show only the coloring page content */
+	.site-main {
+		padding: 0;
+	}
+
+	.colouring-page-frame {
+		display: block;
+		padding: 0;
+		margin: 0;
+		border: 0;
+		box-shadow: none;
+		page-break-after: avoid;
+		page-break-inside: avoid;
+	}
+
+	.colouring-page-frame img {
+		max-width: 100%;
+		max-height: 90vh;
+		height: auto;
+		border: 2px solid var(--kk-ink);
+		border-radius: 0;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Print page setup */
+	@page {
+		margin: 15mm;
+		size: A4 portrait;
+	}
+}
+
+/* ========================================
+   Kinderkleurplaten Wereld - Mobile Optimizations
+======================================== */
+
+/* Touch target improvements for children */
+@media (hover: none) and (pointer: coarse) {
+	.button,
+	.button--secondary,
+	.button--ghost {
+		min-height: 56px;
+		padding: 1rem 1.5rem;
+		font-size: 1.1rem;
+	}
+
+	.primary-navigation a {
+		min-height: 52px;
+		padding: 0.75rem 1.25rem;
+		font-size: 1.05rem;
+	}
+
+	/* Larger gallery items for touch */
+	.kk-gallery-card img {
+		border-width: 2px;
+	}
+
+	.kk-gallery-card h3 {
+		font-size: 1.35rem;
+	}
+}
+
+/* ========================================
+   Kinderkleurplaten Wereld - High Contrast Mode
+======================================== */
+@media (prefers-contrast: high) {
+	.button,
+	.button--secondary,
+	.button--ghost {
+		border: 2px solid var(--kk-ink);
+	}
+
+	.colouring-page-frame img,
+	.hero-card img,
+	.kk-gallery-card img {
+		border: 3px solid var(--kk-ink);
+	}
+}
+
+/* ========================================
+   Kinderkleurplaten Wereld - Reduced Motion
+======================================== */
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	* {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+/* ========================================
+   Kinderkleurplaten Wereld - Print Button Enhancement
+======================================== */
+
+/* Specific print button styles */
+.print-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	min-height: 48px;
+	padding: 0.75rem 1.25rem;
+	border: 0;
+	border-radius: 999px;
+	background: var(--kk-green);
+	color: #053c2a;
+	box-shadow: 0 8px 20px rgba(114, 239, 178, 0.25);
+	font-weight: 900;
+	cursor: pointer;
+	text-decoration: none;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.print-button:hover,
+.print-button:focus {
+	transform: translateY(-2px);
+	box-shadow: 0 12px 25px rgba(114, 239, 178, 0.35);
+	background: #5de0a3;
+}
+
+.print-button svg {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}

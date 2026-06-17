@@ -1,0 +1,114 @@
+/*
+ * WPCode Snippet: Homepage Grid CSS
+ * Description: CSS Grid and button styles for homepage layout
+ * Installation: 
+ *   1. Go to WP Admin > Appearance > WPCode > Add New
+ *   2. Paste this code in a new CSS snippet
+ *   3. Set location to "Frontend Styles" or "Site Wide"
+ *   4. Save and activate the snippet
+ */
+
+/* Base button styles */
+.kk-btn {
+	text-decoration: none;
+	display: inline-block;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.2s ease;
+	border: none;
+}
+
+/* Grid Container - Minimum 3 columns on desktop, 1 on mobile */
+.kk-grid {
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	width: min(100% - 2rem, var(--kk-container, 1200px));
+	margin-inline: auto;
+}
+
+/* Ensure at least 3 columns on larger screens */
+@media (min-width: 1024px) {
+	.kk-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+/* Card Styling */
+.kk-card {
+	background: #fff;
+	border: 1px solid #e5e5e5;
+	border-radius: 15px;
+	padding: 1.5rem;
+	text-align: center;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+/* Card Hover Effect */
+.kk-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Print Button - Green background */
+.kk-btn--print {
+	background: #61f4a3;
+	color: #000;
+	padding: 0.75rem 1.5rem;
+	border-radius: 25px;
+	font-size: 1rem;
+}
+
+.kk-btn--print:hover {
+	background: #4de08a;
+	transform: translateY(-2px);
+}
+
+/* SVG Button - Transparent with pink border */
+.kk-btn--download {
+	background: transparent;
+	color: #ffb6c1;
+	border: 2px solid #ffb6c1;
+	padding: 0.75rem 1.5rem;
+	border-radius: 25px;
+	font-size: 1rem;
+}
+
+.kk-btn--download:hover {
+	background: #ffb6c1;
+	color: #000;
+	transform: translateY(-2px);
+}
+
+/* Mobile Responsive Breakpoints */
+@media (max-width: 768px) {
+	.kk-grid {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+	
+	.kk-card {
+		padding: 1.25rem;
+	}
+	
+	.kk-btn--print,
+	.kk-btn--download {
+		padding: 0.6rem 1.25rem;
+		font-size: 0.9rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.kk-grid {
+		gap: 0.75rem;
+	}
+	
+	.kk-card {
+		padding: 1rem;
+		border-radius: 12px;
+	}
+}

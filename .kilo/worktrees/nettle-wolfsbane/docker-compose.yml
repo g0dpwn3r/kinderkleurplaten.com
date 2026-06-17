@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: kleurplaten_wp
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      WORDPRESS_DB_HOST: 94.130.141.198:3306
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: '#5VyzWQ0$$8$$haHEbW5UURBoL&WcGq|tRXmk|ASVmuQnet0JDTB'
+      WORDPRESS_DB_NAME: kinderkleurplaten
+    volumes:
+      - /DATA/AppData/kinderkleurplaten.nl:/var/www/html
