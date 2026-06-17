@@ -1,10 +1,24 @@
+import os
+import sys
+from pathlib import Path
+
+# Laad environment variables uit .env
+try:
+    from dotenv import load_dotenv
+    SCRIPT_DIR = Path(__file__).parent.resolve()
+    load_dotenv(dotenv_path=SCRIPT_DIR / ".env")
+except ImportError:
+    pass
+
 import requests
 
-# Plak hier tijdelijk de lange token-code die je van Pinterest hebt gekregen
-TOKEN = "pina_AMAWAIYYADG4QBYAGBAGODYRSZD5LHQBQBIQCG2WAUB45AHLYJWUTCHWO4IO7QYQ5AHSQ76RZOKQ4ZCPTYOAQHNL7AXRP4AA"
+PINTEREST_ACCESS_TOKEN = os.getenv("PINTEREST_ACCESS_TOKEN", "")
+if not PINTEREST_ACCESS_TOKEN:
+    print("Fout: PINTEREST_ACCESS_TOKEN niet gevonden in .env", file=sys.stderr)
+    sys.exit(1)
 
 headers = {
-    "Authorization": f"Bearer {TOKEN}"
+    "Authorization": f"Bearer {PINTEREST_ACCESS_TOKEN}"
 }
 
 try:
