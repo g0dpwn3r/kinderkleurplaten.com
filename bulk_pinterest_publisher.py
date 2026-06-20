@@ -20,7 +20,13 @@ from typing import Optional
 
 import requests
 
-from publish_to_pinterest import PinterestPublisher, PinterestAPIError, PinterestRateLimitError
+from publish_to_pinterest import (
+    PinterestPublisher,
+    PinterestBoardRouter,
+    PinterestAPIError,
+    PinterestRateLimitError,
+    extract_wp_category_name,
+)
 
 # ---------------------------------------------------------------------------
 # Configuratie
@@ -196,6 +202,7 @@ def extract_post_data(post: dict) -> Optional[dict]:
         "title": title,
         "url": post_url,
         "featured_image_url": featured_image_url,
+        "category_name": extract_wp_category_name(post),
     }
 
 
@@ -298,6 +305,22 @@ def process_post(
     file_size_kb = temp_path.stat().st_size / 1024
     print(f"[IMG] Gedownload: {temp_path.name} ({file_size_kb:.1f} KB)")
 
+    # Pinterest Board kiezen op basis van de WordPress category naam
+    board_id = None
+    category_name = post.get("category_name")
+
+    if category_name:
+        board_id = publisher.board_router.get_or_create_board(
+            board_name=category_name,
+            board_map=publisher.board_map,
+        )
+    else:
+        print(f"[Fout] Geen WordPress category gevonden voor post {post_id}. Board routing overgeslagen.")
+
+    if not board_id:
+        print(f"[Fout] Kon geen geldige Pinterest Board ID bepalen voor post {post_id}. Overslaan.")
+        return False
+
     # Pin op Pinterest
     try:
         pin_result = publisher.publish_image(
@@ -305,6 +328,7 @@ def process_post(
             subject=title,
             wordpress_post_url=url,
             alt_text=title,
+            board_id=board_id,
         )
 
         if pin_result:
@@ -356,7 +380,19 @@ def main():
         print("[Fout] Kan PinterestPublisher niet initialiseren. Controleer credentials.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"[Setup] Pinterest Publisher geïnitialiseerd voor board: {publisher.board_id}")
+    publisher.board_router = PinterestBoardRouter(
+        access_token=publisher.access_token,
+        api_base=publisher.api_base,
+    )
+
+    try:
+        publisher.board_map = publisher.board_router.fetch_boards()
+        print(f"[Setup] Pinterest Boards geladen: {len(publisher.board_map)}")
+    except Exception as exc:
+        publisher.board_map = {}
+        print(f"[Setup] Waarschuwing: kon Pinterest Boards niet laden ({exc}). Ontbrekende Boards worden later automatisch aangemaakt.")
+
+    print(f"[Setup] Pinterest Publisher geïnitialiseerd. Fallback board: {publisher.board_id or 'geen'}")
 
     # Haal alle WordPress posts op
     print("\n[WP] Alle kleurplaten ophalen uit WordPress...")

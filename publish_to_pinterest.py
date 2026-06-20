@@ -58,6 +58,265 @@ class PinterestRateLimitError(PinterestAPIError):
     pass
 
 
+class PinterestBoardError(PinterestAPIError):
+    """Pinterest Board lookup/create fout."""
+    pass
+
+
+# ---------------------------------------------------------------------------
+# Pinterest Board Routing
+# ---------------------------------------------------------------------------
+
+PINTEREST_BOARD_PRIVACY = os.getenv("PINTEREST_BOARD_PRIVACY", "PUBLIC")
+
+
+class PinterestBoardRouter:
+    """
+    Zoekt bestaande Pinterest Boards op en maakt ontbrekende Boards aan.
+
+    Board namen worden exact gematcht na het verwijderen van leading/trailing
+    whitespace. Een mislukte lookup of create wordt netjes afgehandeld door
+    get_or_create_board() en retourneert None, zodat de pinning queue kan
+    doorgaan met de volgende post.
+    """
+
+    MAX_RETRIES = 3
+    RETRY_BASE_DELAY = 5
+
+    def __init__(
+        self,
+        access_token: str,
+        api_base: str = PINTEREST_API_BASE,
+        timeout: int = 30,
+        default_privacy: str = PINTEREST_BOARD_PRIVACY,
+    ):
+        if not access_token:
+            raise PinterestBoardError("PINTEREST_ACCESS_TOKEN ontbreekt.")
+
+        self.access_token = access_token
+        self.api_base = api_base.rstrip("/")
+        self.timeout = timeout
+        self.default_privacy = default_privacy.upper()
+
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self.access_token}",
+            "Accept": "application/json",
+        }
+
+    def _api_url(self, endpoint: str) -> str:
+        return f"{self.api_base}/{endpoint.lstrip('/')}"
+
+    def _extract_error_message(self, response: requests.Response) -> str:
+        try:
+            body = response.json()
+            if isinstance(body, dict):
+                return body.get("message") or body.get("code") or response.text
+        except (json.JSONDecodeError, ValueError):
+            pass
+        return response.text[:500]
+
+    def _request_json(
+        self,
+        method: str,
+        endpoint: str,
+        json_body: dict | None = None,
+        params: dict | None = None,
+    ) -> dict:
+        url = self._api_url(endpoint)
+
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                response = requests.request(
+                    method=method,
+                    url=url,
+                    headers=self._headers(),
+                    json=json_body,
+                    params=params,
+                    timeout=self.timeout,
+                )
+
+                if response.status_code in (200, 201):
+                    try:
+                        return response.json()
+                    except (json.JSONDecodeError, ValueError) as exc:
+                        raise PinterestBoardError(
+                            f"Pinterest API gaf geen geldige JSON terug voor {endpoint}: {exc}"
+                        ) from exc
+
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    wait = int(retry_after) if retry_after and retry_after.isdigit() else self.RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    print(f"[Pinterest Boards] Rate-limit (429). Wachten {wait}s (poging {attempt}/{self.MAX_RETRIES})...")
+                    time.sleep(wait)
+                    continue
+
+                if response.status_code >= 500:
+                    wait = self.RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    print(f"[Pinterest Boards] Serverfout {response.status_code}. Wachten {wait}s (poging {attempt}/{self.MAX_RETRIES})...")
+                    time.sleep(wait)
+                    continue
+
+                error_msg = self._extract_error_message(response)
+                raise PinterestBoardError(
+                    f"Pinterest Board API fout: {error_msg}",
+                    status_code=response.status_code,
+                    response_body=response.text,
+                )
+
+            except requests.exceptions.Timeout:
+                print(f"[Pinterest Boards] Timeout bij poging {attempt}/{self.MAX_RETRIES}...")
+                time.sleep(self.RETRY_BASE_DELAY * (2 ** (attempt - 1)))
+            except requests.exceptions.ConnectionError as exc:
+                print(f"[Pinterest Boards] Verbindingsfout: {exc}")
+                time.sleep(self.RETRY_BASE_DELAY * (2 ** (attempt - 1)))
+
+        raise PinterestBoardError(f"Pinterest Board API gaf geen antwoord na {self.MAX_RETRIES} pogingen.")
+
+    def fetch_boards(self) -> dict[str, str]:
+        """
+        Haalt alle beschikbare Boards op en retourneert {"Board Name": "Board ID"}.
+        Ondersteunt Pinterest bookmark-paginering.
+        """
+        board_map: dict[str, str] = {}
+        bookmark: str | None = None
+
+        while True:
+            params = {"page_size": 100}
+            if bookmark:
+                params["bookmark"] = bookmark
+
+            try:
+                data = self._request_json("GET", "/boards", params=params)
+            except PinterestBoardError:
+                raise
+            except Exception as exc:
+                raise PinterestBoardError(f"Onverwachte fout bij ophalen Boards: {exc}") from exc
+
+            items = data.get("items", [])
+            if not isinstance(items, list):
+                raise PinterestBoardError(
+                    "Pinterest Boards response bevat geen 'items' lijst.",
+                    response_body=json.dumps(data),
+                )
+
+            for board in items:
+                if not isinstance(board, dict):
+                    continue
+
+                name = board.get("name")
+                board_id = board.get("id")
+                if name and board_id:
+                    board_map[str(name).strip()] = str(board_id)
+
+            bookmark = data.get("bookmark")
+            if not bookmark:
+                break
+
+        return board_map
+
+    def create_board(self, board_name: str) -> str:
+        """
+        Maakt een nieuw Pinterest Board aan en retourneert de Board ID.
+        """
+        clean_name = str(board_name).strip()
+        if not clean_name:
+            raise PinterestBoardError("Board naam mag niet leeg zijn.")
+
+        payload = {
+            "name": clean_name,
+        }
+
+        if self.default_privacy:
+            payload["privacy"] = self.default_privacy
+
+        try:
+            data = self._request_json("POST", "/boards", json_body=payload)
+        except PinterestBoardError:
+            raise
+        except Exception as exc:
+            raise PinterestBoardError(f"Onverwachte fout bij aanmaken Board '{clean_name}': {exc}") from exc
+
+        board_id = data.get("id")
+        if not board_id:
+            raise PinterestBoardError(
+                f"Pinterest retourneerde geen Board ID bij het aanmaken van '{clean_name}'.",
+                response_body=json.dumps(data),
+            )
+
+        return str(board_id)
+
+    def get_or_create_board(
+        self,
+        board_name: str | None,
+        board_map: dict[str, str],
+    ) -> str | None:
+        """
+        Geeft de Board ID terug voor een exacte WordPress category naam.
+        Als het Board ontbreekt, wordt het automatisch aangemaakt.
+
+        Retourneert None bij fouten zodat de caller de pin kan overslaan zonder
+        dat de volledige pinning queue crasht.
+        """
+        if not board_name:
+            print("[Pinterest Boards] Geen WordPress category naam gevonden; board routing overgeslagen.")
+            return None
+
+        clean_name = str(board_name).strip()
+        if not clean_name:
+            print("[Pinterest Boards] Lege category naam; board routing overgeslagen.")
+            return None
+
+        if clean_name in board_map:
+            return board_map[clean_name]
+
+        print(f"[Pinterest Boards] Board '{clean_name}' niet gevonden. Aanmaken...")
+
+        try:
+            new_board_id = self.create_board(clean_name)
+        except PinterestBoardError as exc:
+            print(f"[Pinterest Boards] Fout bij aanmaken Board '{clean_name}': {exc}", file=sys.stderr)
+            return None
+        except Exception as exc:
+            print(f"[Pinterest Boards] Onverwachte fout bij Board '{clean_name}': {exc}", file=sys.stderr)
+            return None
+
+        board_map[clean_name] = new_board_id
+        print(f"[Pinterest Boards] Board '{clean_name}' aangemaakt met ID: {new_board_id}")
+        return new_board_id
+
+
+def extract_wp_category_name(post: dict, taxonomy: str = "category") -> str | None:
+    """
+    Haalt de eerste WordPress category naam uit een WP REST post object.
+
+    Verwacht dat de WordPress API met _embed wordt aangeroepen, zodat
+    post["_embedded"]["wp:term"] gevuld is.
+    """
+    embedded = post.get("_embedded", {})
+    if not isinstance(embedded, dict):
+        return None
+
+    term_groups = embedded.get("wp:term", [])
+    if not isinstance(term_groups, list):
+        return None
+
+    for term_group in term_groups:
+        if not isinstance(term_group, list):
+            continue
+
+        for term in term_group:
+            if not isinstance(term, dict):
+                continue
+
+            if term.get("taxonomy") == taxonomy:
+                name = term.get("name")
+                if name:
+                    return str(name).strip()
+
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Hoofdklasse
 # ---------------------------------------------------------------------------
@@ -84,13 +343,15 @@ class PinterestPublisher:
                 "Zie instructies onderaan dit bestand."
             )
         if not board_id:
-            raise PinterestAPIError(
-                "PINTEREST_BOARD_ID ontbreekt. "
-                "Voeg je board-ID toe aan .env of geef hem mee bij initialisatie."
+            print(
+                "[Config] Waarschuwing: PINTEREST_BOARD_ID ontbreekt. "
+                "Geef bij dynamische board routing board_id per pin mee."
             )
 
         self.access_token = access_token
         self.board_id = board_id
+        self.board_router: PinterestBoardRouter | None = None
+        self.board_map: dict[str, str] = {}
         self.api_base = api_base.rstrip("/")
         self.site_base = site_base.rstrip("/")
 
@@ -265,9 +526,11 @@ class PinterestPublisher:
         description: str,
         destination_url: str,
         alt_text: str = "",
+        board_id: str | None = None,
     ) -> dict:
         """
-        Maakt een nieuwe Pin op de geconfigureerde Board.
+        Maakt een nieuwe Pin aan op de geconfigureerde Board of op de
+        dynamisch gekozen Board.
 
         Args:
             media_id:        ID returned door upload_image().
@@ -276,6 +539,8 @@ class PinterestPublisher:
             destination_url: Volledige URL waar de pin naartoe leidt
                              (bijv. de WordPress-post).
             alt_text:        Optionele alt-tekst voor toegankelijkheid.
+            board_id:        Optionele dynamische Pinterest Board ID. Als deze
+                             leeg is, wordt self.board_id gebruikt.
 
         Retourneert:
             dict met pin-gegevens (id, url, etc.) van Pinterest.
@@ -285,8 +550,15 @@ class PinterestPublisher:
         """
         print(f"[Pinterest] Pin aanmaken: '{title}'")
 
+        target_board_id = board_id or self.board_id
+        if not target_board_id:
+            raise PinterestAPIError(
+                "Pinterest board_id ontbreekt. Geef PINTEREST_BOARD_ID mee of "
+                "geef board_id per pin mee bij create_pin()."
+            )
+
         pin_data: dict = {
-            "board_id": self.board_id,
+            "board_id": target_board_id,
             "media_source": {
                 "media_id": media_id,
             },
@@ -318,6 +590,7 @@ class PinterestPublisher:
         alt_text: str = "",
         title_template: str = "Gratis {subject} Kleurplaat",
         description_template: str | None = None,
+        board_id: str | None = None,
     ) -> dict | None:
         """
         Hoog-niveau methode: uploadt een afbeelding en maakt direct een Pin.
@@ -329,6 +602,7 @@ class PinterestPublisher:
             alt_text:            Alt-tekst voor de afbeelding.
             title_template:      Jinlaag-vrije titel; {subject} wordt vervangen.
             description_template:Optionele beschrijving; wordt gegenereerd als None.
+            board_id:            Optionele dynamische Pinterest Board ID.
 
         Retourneert:
             dict met pin-gegevens bij succes, None bij fout.
@@ -348,6 +622,7 @@ class PinterestPublisher:
                 description=description,
                 destination_url=wordpress_post_url,
                 alt_text=alt_text or title,
+                board_id=board_id,
             )
             return pin_info
 
