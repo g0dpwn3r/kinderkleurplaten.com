@@ -52,6 +52,105 @@ if (!function_exists('kinderkleurplaten_get_colouring_image_url')) {
 	}
 }
 
+if (!function_exists('kinderkleurplaten_find_colouring_image')) {
+	/**
+	 * zoekt de uitgelichte afbeelding (post thumbnail) van een kleurplaat.
+	 *
+	 * Gebruik 1 (per-post):   kinderkleurplaten_find_colouring_image( $post_id )
+	 *   → geeft een array terug met 'id', 'url' en 'alt', of false.
+	 *
+	 * Gebruik 2 (archive):    kinderkleurplaten_find_colouring_image()
+	 *   → Op een taxonomy-archive van 'kleurplaat_categorie': haalt de
+	 *     eerste kleurplaat uit de huidige term en geeft diens featured
+	 *     image terug. Wordt gebruikt als banner / fallback afbeelding
+	 *     voor de archive header.
+	 *
+	 * @param int|null $post_id  Post-ID, of null voor archive-context.
+	 * @return array|false  Array met keys 'id' (attachment ID), 'url', 'alt'.
+	 *                      False als geen afbeelding gevonden.
+	 */
+	function kinderkleurplaten_find_colouring_image($post_id = null) {
+
+		/* ── Archive-context: geen post-ID opgegeven ────────────── */
+		if ($post_id === null) {
+			if (!is_tax('kleurplaat_categorie') && !is_category() && !is_tag()) {
+				return false;
+			}
+
+			$term = get_queried_object();
+			if (!$term || is_wp_error($term) || !isset($term->term_id)) {
+				return false;
+			}
+
+			$first = new WP_Query(array(
+				'post_type'      => 'kleurplaten',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'tax_query'      => array(
+					array(
+						'taxonomy'         => 'kleurplaat_categorie',
+						'field'            => 'term_id',
+						'terms'            => $term->term_id,
+						'include_children' => true,
+					),
+				),
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			));
+
+			if (!$first->have_posts()) {
+				wp_reset_postdata();
+				return false;
+			}
+
+			$post_id = (int) $first->posts[0];
+			wp_reset_postdata();
+		}
+
+		/* ── Per-post lookup (incl. fallback vanuit archive) ────── */
+		$post_id = (int) $post_id;
+		if ($post_id <= 0) {
+			return false;
+		}
+
+		$thumbnail_id = get_post_thumbnail_id($post_id);
+		if (!$thumbnail_id) {
+			return false;
+		}
+
+		$image_data = wp_get_attachment_image_src($thumbnail_id, 'full');
+		if (empty($image_data[0])) {
+			return false;
+		}
+
+		return array(
+			'id'  => (int) $thumbnail_id,
+			'url' => esc_url($image_data[0]),
+			'alt' => esc_attr(get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true)),
+		);
+	}
+}
+
+if (!function_exists('kinderkleurplaten_excerpt')) {
+	/**
+	 * Veilige excerpt-helper voor in templates.
+	 * Werkt binnen de WordPress Loop: geen argument nodig.
+	 *
+	 * @param int $words Aantal woorden (default 18).
+	 * @return string HTML-veilige excerpt.
+	 */
+	function kinderkleurplaten_excerpt($words = 18) {
+		$excerpt = get_the_excerpt();
+		if (empty($excerpt)) {
+			$excerpt = get_the_content();
+			$excerpt = wp_strip_all_tags($excerpt);
+		}
+		return wp_trim_words($excerpt, (int) $words, '…');
+	}
+}
+
 add_action('init', 'kk_register_post_types_and_taxonomies');
 function kk_register_post_types_and_taxonomies() {
 	$kleurplaten_labels = array(
@@ -181,8 +280,49 @@ function kk_print_inline_theme_css() {
 .kk-gastenboek-card h3 { margin: 0 0 8px; }
 .kk-gastenboek-card p { margin: 0; color: #475569; line-height: 1.6; }
 @media (max-width: 720px) { .kk-gallery-search { flex-direction: column; } .kk-gallery-search button { width: 100%; } .kk-gallery-grid { grid-template-columns: 1fr; } }
+.kk-homepage-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 2rem 0; }
+.kk-homepage-card { display: flex; flex-direction: column; height: 100%; padding: 1.25rem; border: 1px solid rgba(36, 48, 66, 0.12); border-radius: 28px; background: rgba(255, 255, 255, 0.86); box-shadow: 0 10px 28px rgba(36, 48, 66, 0.08); text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.kk-homepage-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(36, 48, 66, 0.12); }
+.kk-homepage-card__image { display: block; margin-bottom: 1rem; border-radius: 18px; overflow: hidden; }
+.kk-homepage-card__image img { display: block; width: 100%; height: auto; border: 1px solid rgba(36, 48, 66, 0.12); background: #ffffff; }
+.kk-homepage-card__icon { display: grid; place-items: center; min-height: 100px; font-size: 2.5rem; background: rgba(36, 48, 66, 0.04); border-radius: 18px; color: #667085; }
+.kk-homepage-card__content { flex: 1; display: flex; flex-direction: column; }
+.kk-homepage-card__title { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; color: #243042; }
+.kk-homepage-card__excerpt { flex: 1; color: #667085; font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.5; }
+.kk-homepage-card__download { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1rem; border-radius: 999px; background: #72efb2; color: #053c2a; font-weight: 800; text-decoration: none; font-size: 0.9rem; }
+@media (max-width: 1024px) { .kk-homepage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .kk-homepage-grid { grid-template-columns: 1fr; } }
+.kk-hero-cats { margin: 3rem 0; }
+.kk-hero-cats__title { font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 800; text-align: center; margin: 0 0 0.5rem; }
+.kk-hero-cats__subtitle { text-align: center; color: #667085; margin: 0 0 2rem; font-size: 1.1rem; }
+.kk-hero-cats__grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kk-hero-cat-card { display: flex; flex-direction: column; border-radius: 24px; padding: 1.5rem; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.kk-hero-cat-card:hover { transform: translateY(-4px); }
+.kk-hero-cat-card--pink { background: #fff0f3; border: 2px solid #ffb6c1; }
+.kk-hero-cat-card--blue { background: #f0f9ff; border: 2px solid #a5d8ff; }
+.kk-hero-cat-card--green { background: #f0fff4; border: 2px solid #b2f2bb; }
+.kk-hero-cat-card--purple { background: #f8f0ff; border: 2px solid #d0bfff; }
+.kk-hero-cat-card__visual { display: grid; place-items: center; min-height: 120px; margin-bottom: 1rem; border-radius: 16px; overflow: hidden; }
+.kk-hero-cat-card__thumb img { display: block; width: 100%; height: 120px; object-fit: cover; border-radius: 14px; }
+.kk-hero-cat-card__emoji { font-size: 2.5rem; }
+.kk-hero-cat-card__body { display: flex; flex-direction: column; gap: 0.5rem; }
+.kk-hero-cat-card__title { margin: 0; font-size: 1.2rem; font-weight: 800; color: #243042; }
+.kk-hero-cat-card__count { color: #667085; font-size: 0.95rem; }
+.kk-hero-cat-card__cta { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; color: var(--kk-pink); font-size: 0.95rem; }
+@media (max-width: 1024px) { .kk-hero-cats__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .kk-hero-cats__grid { grid-template-columns: 1fr; } }
+.kk-gallery-section-cats { margin-bottom: 3rem; }
+.kk-gallery-section__title { font-size: 1.5rem; font-weight: 800; color: #243042; margin: 0 0 1.25rem; }
+.kk-gallery-pagination { margin: 2rem 0 0; display: flex; justify-content: center; }
+.kk-gallery-pagination .page-numbers { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0; flex-wrap: wrap; }
+.kk-gallery-pagination .page-numbers li { display: inline-block; }
+.kk-gallery-pagination .page-numbers a, .kk-gallery-pagination .page-numbers span { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; min-height: 42px; padding: 6px 14px; border-radius: 999px; font-weight: 700; text-decoration: none; transition: all 0.2s ease; }
+.kk-gallery-pagination .page-numbers a { background: #fff; border: 2px solid #e5e7eb; color: #243042; }
+.kk-gallery-pagination .page-numbers a:hover { border-color: #ffb6c1; background: #fff5f7; }
+.kk-gallery-pagination .page-numbers .current { background: #ffb6c1; border: 2px solid #ffb6c1; color: #5a0f1e; }
+.kk-gallery-pagination .page-numbers .dots { border: none; background: transparent; color: #94a3b8; }
 ';
-
+ 
 	echo '<style id="kinderkleurplaten-inline-css">' . $css . '</style>' . "\n";
 }
 
@@ -437,4 +577,507 @@ document.addEventListener('DOMContentLoaded',initPrintButtons);
 })();
 </script>
 <?php
+}
+
+if (!function_exists('kk_get_category_dynamic_thumbnail')) {
+    /**
+     * Haalt de featured image op van de eerste kleurplaat in de opgegeven
+     * categorie. Wordt gebruikt als dynamisch logo / thumbnail op
+     * categoriekaarten in plaats van een statisch icoon.
+     *
+     * Werkt op de officiële custom taxonomy 'kleurplaat_categorie' die aan
+     * het CPT 'kleurplaten' is gekoppeld.
+     *
+     * @param int    $term_id  ID van de kleurplaat_categorie term.
+     * @param string $size     Gewenste WP image size (default: 'medium').
+     * @return string HTML <img> of lege string.
+     */
+    function kk_get_category_dynamic_thumbnail($term_id, $size = 'medium') {
+        $term_id = (int) $term_id;
+        if ($term_id <= 0) {
+            return '';
+        }
+
+        $query = new WP_Query(array(
+            'post_type'      => 'kleurplaten',
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+            'tax_query'      => array(
+                array(
+                    'taxonomy' => 'kleurplaat_categorie',
+                    'field'    => 'term_id',
+                    'terms'    => $term_id,
+                    'include_children' => true,
+                ),
+            ),
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+        ));
+
+        if ($query->have_posts()) {
+            $first_post_id = $query->posts[0];
+            $thumbnail_id = get_post_thumbnail_id($first_post_id);
+
+            if ($thumbnail_id) {
+                $image = wp_get_attachment_image($thumbnail_id, $size, false, array(
+                    'alt'     => get_the_title($first_post_id),
+                    'loading' => 'lazy',
+                ));
+                wp_reset_postdata();
+                return $image;
+            }
+        }
+
+        wp_reset_postdata();
+        return '';
+    }
+}
+
+if (!function_exists('kk_get_deduplicated_terms')) {
+    /**
+     * Haalt alle termen op uit de custom taxonomy 'kleurplaat_categorie'
+     * (hoofd- en subcategorieën, geen limiet). Wordt gebruikt voor de
+     * categorie-overzichten op de homepage en /kleurplaten/.
+     *
+     * @param array $args Optionele extra WP_Term_Query args.
+     * @return array Array van WP_Term objecten.
+     */
+    function kk_get_deduplicated_terms($args = array()) {
+        $defaults = array(
+            'taxonomy'   => 'kleurplaat_categorie',
+            'hide_empty' => true,
+            'orderby'    => 'count',
+            'order'      => 'DESC',
+            'number'     => 0, // 0 = geen limiet, haal ALLE termen op.
+        );
+        $args = wp_parse_args($args, $defaults);
+
+        // Geen parent-filter -> zowel hoofd- als subcategorieën worden opgehaald.
+
+        $terms = get_terms($args);
+        if (empty($terms) || is_wp_error($terms)) {
+            return array();
+        }
+
+        return $terms;
+    }
+}
+
+if (!function_exists('kk_get_all_categories_with_thumbnails')) {
+    /**
+     * PERFORMANCE-OPTIMIZED: Haalt alle categorieën + hun eerste kleurplaat-thumbnail
+     * op in één batch en cached het resultaat in een WordPress transient.
+     *
+     * Dit elimineert het N+1 query probleem (1400+ queries → 1 query + cache read).
+     * Cache TTL: 12 uur (43200 seconden).
+     *
+     * @param string $image_size WP image size voor thumbnails (default: 'medium_large').
+     * @return array Array van ['term' => WP_Term, 'thumbnail_html' => string].
+     */
+    function kk_get_all_categories_with_thumbnails($image_size = 'medium_large') {
+        $transient_key = 'kk_categories_with_thumbs_' . md5($image_size);
+        $transient_ttl = 12 * HOUR_IN_SECONDS; // 12 uur
+
+        // Probeer uit cache te laden.
+        $cached = get_transient($transient_key);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        // Cache miss: bouw de data op.
+        $terms = kk_get_deduplicated_terms();
+        if (empty($terms)) {
+            return array();
+        }
+
+        $result = array();
+
+        foreach ($terms as $term) {
+            // Zoek de eerste kleurplaat in deze categorie (minimal query).
+            $first_post_query = new WP_Query(array(
+                'post_type'      => 'kleurplaten',
+                'post_status'    => 'publish',
+                'posts_per_page' => 1,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+                'tax_query'      => array(
+                    array(
+                        'taxonomy'         => 'kleurplaat_categorie',
+                        'field'            => 'term_id',
+                        'terms'            => $term->term_id,
+                        'include_children' => true,
+                    ),
+                ),
+                'fields'         => 'ids',
+                'no_found_rows'  => true,
+            ));
+
+            $thumbnail_html = '';
+
+            if ($first_post_query->have_posts()) {
+                $first_post_id = $first_post_query->posts[0];
+                $thumbnail_id = get_post_thumbnail_id($first_post_id);
+
+                if ($thumbnail_id) {
+                    $thumbnail_html = wp_get_attachment_image($thumbnail_id, $image_size, false, array(
+                        'alt'     => get_the_title($first_post_id),
+                        'loading' => 'lazy',
+                    ));
+                }
+            }
+
+            wp_reset_postdata();
+
+            $result[] = array(
+                'term'           => $term,
+                'thumbnail_html' => $thumbnail_html,
+            );
+        }
+
+        // Sla op in transient voor de volgende 12 uur.
+        set_transient($transient_key, $result, $transient_ttl);
+
+        return $result;
+    }
+}
+
+if (!function_exists('kk_invalidate_category_cache')) {
+    /**
+     * Wis alle categorie-thumbnail transients.
+     * Wordt aangeroepen via cache invalidation hooks bij content-wijzigingen.
+     */
+    function kk_invalidate_category_cache() {
+        // Wis transients voor alle mogelijke image sizes.
+        delete_transient('kk_categories_with_thumbs_' . md5('medium_large'));
+        delete_transient('kk_categories_with_thumbs_' . md5('medium'));
+        delete_transient('kk_categories_with_thumbs_' . md5('thumbnail'));
+    }
+}
+
+// Cache invalidation hooks.
+add_action('save_post_kleurplaten', 'kk_invalidate_category_cache', 10, 3);
+add_action('delete_post', 'kk_invalidate_category_cache');
+add_action('created_kleurplaat_categorie', 'kk_invalidate_category_cache');
+add_action('edited_kleurplaat_categorie', 'kk_invalidate_category_cache');
+add_action('delete_kleurplaat_categorie', 'kk_invalidate_category_cache');
+add_action('set_object_terms', 'kk_invalidate_category_cache', 10, 6);
+
+// REST endpoint om cache te wissen vanuit het bulk categorisatie script.
+add_action('rest_api_init', function() {
+    register_rest_route('kk/v1', '/flush-cache', array(
+        'methods'             => 'POST',
+        'callback'            => function(\WP_REST_Request $request) {
+            // Verifieer dat de requester geautoriseerd is.
+            if (!current_user_can('manage_options')) {
+                return new \WP_Error('rest_forbidden', 'Unauthorized', array('status' => 403));
+            }
+
+            kk_invalidate_category_cache();
+
+            return array('success' => true, 'message' => 'Category cache flushed');
+        },
+        'permission_callback' => function() {
+            return current_user_can('manage_options');
+        },
+    ));
+});
+
+/**
+ * Shortcode: [kleurplaat_categories] — toont categoriekaarten uit
+ * 'kleurplaat_categorie' (hoofd- én subcategorieën, geen limiet).
+ *
+ * PERFORMANCE: Gebruikt kk_get_all_categories_with_thumbnails() met
+ * transient caching (12u TTL) om N+1 queries te elimineren.
+ *
+ * Attributen:
+ *  - number   (int) Aantal weer te geven kaarten. 0 of <0 = alles (default).
+ *  - columns  (int) Aantal kolommen (default: 4).
+ *  - dynamic_thumb (bool) Of dynamische thumbnail getoond moet worden (default ja).
+ */
+add_shortcode('kleurplaat_categories', 'kk_kleurplaat_categories_shortcode');
+function kk_kleurplaat_categories_shortcode($atts = array()) {
+    $atts = shortcode_atts(array(
+        'number'        => 0,
+        'columns'       => 4,
+        'dynamic_thumb' => 1,
+    ), $atts, 'kleurplaat_categories');
+
+    $use_thumb = (int) $atts['dynamic_thumb'] !== 0;
+
+    // Gebruik de gecachte versie als thumbnails aan staan.
+    if ($use_thumb) {
+        $cached_terms = kk_get_all_categories_with_thumbnails('medium_large');
+    } else {
+        $terms = kk_get_deduplicated_terms();
+        $cached_terms = array();
+        foreach ($terms as $term) {
+            $cached_terms[] = array('term' => $term, 'thumbnail_html' => '');
+        }
+    }
+
+    if (empty($cached_terms)) {
+        return '';
+    }
+
+    $number = (int) $atts['number'];
+    if ($number > 0 && count($cached_terms) > $number) {
+        $cached_terms = array_slice($cached_terms, 0, $number);
+    }
+
+    $columns    = max(1, (int) $atts['columns']);
+    $grid_style = 'display:grid; gap:1.5rem; grid-template-columns:repeat(' . $columns . ', minmax(0, 1fr)); margin:2rem 0;';
+
+    ob_start();
+    ?>
+    <div class="kk-homepage-grid" style="<?php echo esc_attr($grid_style); ?>">
+        <?php foreach ($cached_terms as $item) :
+            $term           = $item['term'];
+            $thumbnail_html = $item['thumbnail_html'];
+        ?>
+            <a href="<?php echo esc_url(get_term_link($term)); ?>" class="kk-homepage-card">
+                <div class="kk-homepage-card__image">
+                    <?php if ($thumbnail_html) : ?>
+                        <?php echo $thumbnail_html; ?>
+                    <?php elseif (trim($term->description)) : ?>
+                        <div class="kk-homepage-card__icon"><?php echo esc_html($term->description); ?></div>
+                    <?php endif; ?>
+                </div>
+                <div class="kk-homepage-card__content">
+                    <h3 class="kk-homepage-card__title"><?php echo esc_html($term->name); ?></h3>
+                    <?php if ($term->count > 0) : ?>
+                        <p class="kk-homepage-card__excerpt">
+                            <?php printf(_n('%s kleurplaat', '%s kleurplaten', $term->count, 'kinderkleurplaten'), $term->count); ?>
+                        </p>
+                    <?php endif; ?>
+                    <span class="kk-homepage-card__download"><?php esc_html_e('Bekijk categorie', 'kinderkleurplaten'); ?></span>
+                </div>
+            </a>
+        <?php endforeach; ?>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('kk_hero_categorieën', 'kk_hero_categorieen_shortcode');
+function kk_hero_categorieen_shortcode($atts = array()) {
+    $atts = shortcode_atts(array(
+        'count' => 4,
+    ), $atts, 'kk_hero_categorieën');
+
+    // Gebruik de gecachte functie om N+1 queries te elimineren.
+    $cached_terms = kk_get_all_categories_with_thumbnails('medium_large');
+    $cached_terms = array_slice($cached_terms, 0, intval($atts['count']));
+
+    if (empty($cached_terms)) {
+        return '';
+    }
+
+    $accents = array('pink', 'blue', 'green', 'purple');
+
+    ob_start();
+    ?>
+    <section class="kk-hero-cats" aria-label="<?php esc_attr_e('Uitgelichte categorieën', 'kinderkleurplaten'); ?>">
+        <h2 class="kk-hero-cats__title"><?php esc_html_e('Ontdek onze kleurplaten', 'kinderkleurplaten'); ?></h2>
+        <p class="kk-hero-cats__subtitle"><?php esc_html_e('Kies een categorie en begin met kleuren!', 'kinderkleurplaten'); ?></p>
+        <div class="kk-hero-cats__grid">
+            <?php foreach ($cached_terms as $index => $item) :
+                $term           = $item['term'];
+                $thumbnail_html = $item['thumbnail_html'];
+                $accent         = $accents[$index % count($accents)];
+            ?>
+                <a href="<?php echo esc_url(get_term_link($term)); ?>" class="kk-hero-cat-card kk-hero-cat-card--<?php echo esc_attr($accent); ?>">
+                    <div class="kk-hero-cat-card__visual">
+                        <?php if ($thumbnail_html) : ?>
+                            <div class="kk-hero-cat-card__thumb"><?php echo $thumbnail_html; ?></div>
+                        <?php elseif (trim($term->description)) : ?>
+                            <span class="kk-hero-cat-card__emoji"><?php echo esc_html($term->description); ?></span>
+                        <?php else : ?>
+                            <span class="kk-hero-cat-card__emoji">🎨</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="kk-hero-cat-card__body">
+                        <h3 class="kk-hero-cat-card__title"><?php echo esc_html($term->name); ?></h3>
+                        <?php if ($term->count > 0) : ?>
+                            <span class="kk-hero-cat-card__count">
+                                <?php printf(_n('%s kleurplaat', '%s kleurplaten', $term->count, 'kinderkleurplaten'), $term->count); ?>
+                            </span>
+                        <?php endif; ?>
+                        <span class="kk-hero-cat-card__cta">
+                            <?php esc_html_e('Bekijk kleurplaten', 'kinderkleurplaten'); ?>
+                            <svg class="kk-hero-cat-card__arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <path d="M4 10h12m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php
+    return ob_get_clean();
+}
+
+add_shortcode('kleurplaat_examples', 'kk_kleurplaat_examples_shortcode');
+function kk_kleurplaat_examples_shortcode($atts = array()) {
+    $atts = shortcode_atts(array(
+        'limit' => 6,
+    ), $atts, 'kleurplaat_examples');
+
+    $query = new WP_Query(array(
+        'post_type'      => 'kleurplaten',
+        'post_status'    => 'publish',
+        'posts_per_page' => intval($atts['limit']),
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ));
+
+    if (!$query->have_posts()) {
+        return '';
+    }
+
+    ob_start();
+    ?>
+    <div class="kk-homepage-grid">
+        <?php while ($query->have_posts()) : $query->the_post(); ?>
+            <article class="kk-homepage-card" id="kk-kleurplaat-<?php echo esc_attr(get_the_ID()); ?>">
+                <?php if (has_post_thumbnail()) : ?>
+                    <div class="kk-homepage-card__image">
+                        <?php the_post_thumbnail('medium'); ?>
+                    </div>
+                <?php endif; ?>
+                <div class="kk-homepage-card__content">
+                    <h3 class="kk-homepage-card__title"><?php the_title(); ?></h3>
+                    <a class="kk-homepage-card__download" href="<?php the_permalink(); ?>">
+                        <?php esc_html_e('Print kleurplaat', 'kinderkleurplaten'); ?>
+                    </a>
+                </div>
+            </article>
+        <?php endwhile; ?>
+    </div>
+    <?php
+    wp_reset_postdata();
+    return ob_get_clean();
+}
+
+add_shortcode('kk_galerij_volledig', 'kk_galerij_volledig_shortcode');
+function kk_galerij_volledig_shortcode($atts = array()) {
+    $atts = shortcode_atts(array(
+        'per_page' => 12,
+    ), $atts, 'kk_galerij_volledig');
+
+    $paged = max(1, get_query_var('paged', 1));
+    if ($paged < 2 && isset($_GET['paged'])) {
+        $paged = max(1, intval($_GET['paged']));
+    }
+
+    // PERFORMANCE: Gebruik gecachte categorieën met thumbnails.
+    $cached_categories = kk_get_all_categories_with_thumbnails('medium_large');
+
+    $gallery_query = new WP_Query(array(
+        'post_type'      => 'kleurplaten',
+        'post_status'    => 'publish',
+        'posts_per_page' => intval($atts['per_page']),
+        'paged'          => $paged,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ));
+
+    ob_start();
+    ?>
+    <div class="kk-gallery-shell">
+
+        <section class="kk-gallery-section-cats">
+            <h2 class="kk-gallery-section__title"><?php esc_html_e('Categorieën', 'kinderkleurplaten'); ?></h2>
+            <?php if (!empty($cached_categories)) : ?>
+                <div class="kk-homepage-grid">
+                    <?php foreach ($cached_categories as $item) :
+                        $term           = $item['term'];
+                        $thumbnail_html = $item['thumbnail_html'];
+                    ?>
+                        <a href="<?php echo esc_url(get_term_link($term)); ?>" class="kk-homepage-card">
+                            <div class="kk-homepage-card__image">
+                                <?php if ($thumbnail_html) : ?>
+                                    <?php echo $thumbnail_html; ?>
+                                <?php elseif (trim($term->description)) : ?>
+                                    <div class="kk-homepage-card__icon"><?php echo esc_html($term->description); ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="kk-homepage-card__content">
+                                <h3 class="kk-homepage-card__title"><?php echo esc_html($term->name); ?></h3>
+                                <?php if ($term->count > 0) : ?>
+                                    <p class="kk-homepage-card__excerpt">
+                                        <?php printf(_n('%s kleurplaat', '%s kleurplaten', $term->count, 'kinderkleurplaten'), $term->count); ?>
+                                    </p>
+                                <?php endif; ?>
+                                <span class="kk-homepage-card__download"><?php esc_html_e('Bekijk thema', 'kinderkleurplaten'); ?></span>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="kk-gallery-section-posts">
+            <h2 class="kk-gallery-section__title"><?php esc_html_e('Alle kleurplaten', 'kinderkleurplaten'); ?></h2>
+            <?php if ($gallery_query->have_posts()) : ?>
+                <div class="kk-gallery-grid">
+                    <?php while ($gallery_query->have_posts()) : $gallery_query->the_post(); ?>
+                        <article class="kk-gallery-card" id="kk-kleurplaat-<?php echo esc_attr(get_the_ID()); ?>">
+                            <div class="kk-gallery-card__image-wrap">
+                                <?php the_post_thumbnail('full', array('class' => 'kk-gallery-card__image', 'loading' => 'lazy', 'decoding' => 'async')); ?>
+                            </div>
+                            <div class="kk-gallery-card__body">
+                                <h3 class="kk-gallery-card__title"><?php the_title(); ?></h3>
+                                <div class="kk-gallery-card__actions">
+                                    <?php
+                                    $print_url = trim(get_post_meta(get_the_ID(), 'kk_print_url', true));
+                                    if ($print_url === '') {
+                                        $print_url = get_permalink();
+                                    }
+                                    $svg_url = trim(get_post_meta(get_the_ID(), 'kk_svg_url', true));
+                                    ?>
+                                    <a class="kk-button kk-button--print" href="<?php echo esc_url($print_url); ?>" target="_blank" rel="noopener noreferrer">
+                                        <?php esc_html_e('Print kleurplaat', 'kinderkleurplaten'); ?>
+                                    </a>
+                                    <?php if ($svg_url !== '') : ?>
+                                        <a class="kk-button kk-button--svg" href="<?php echo esc_url($svg_url); ?>" target="_blank" rel="noopener noreferrer">
+                                            <?php esc_html_e('Download SVG', 'kinderkleurplaten'); ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endwhile; ?>
+                </div>
+
+                <nav class="kk-gallery-pagination">
+                    <?php
+                    $total_pages = $gallery_query->max_num_pages;
+                    if ($total_pages > 1) {
+                        $paginate_links = paginate_links(array(
+                            'base'      => esc_url_raw(add_query_arg('paged', '%#%')),
+                            'format'    => '',
+                            'current'   => $paged,
+                            'total'     => $total_pages,
+                            'prev_text' => __('&laquo; Vorige', 'kinderkleurplaten'),
+                            'next_text' => __('Volgende &raquo;', 'kinderkleurplaten'),
+                            'type'      => 'list',
+                        ));
+                        if ($paginate_links) {
+                            echo $paginate_links;
+                        }
+                    }
+                    ?>
+                </nav>
+            <?php else : ?>
+                <p class="kk-empty-state"><?php esc_html_e('Geen kleurplaten gevonden', 'kinderkleurplaten'); ?></p>
+            <?php endif; ?>
+        </section>
+
+    </div>
+    <?php
+    wp_reset_postdata();
+    return ob_get_clean();
 }

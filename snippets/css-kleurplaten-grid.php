@@ -116,38 +116,41 @@
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 980px) {
-	.kk-homepage-grid {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-	
-	.kk-homepage-grid--columns-4 {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-}
-
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
 	.kk-homepage-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
 	}
 	
 	.kk-homepage-grid--columns-4,
 	.kk-homepage-grid--columns-3 {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
+}
+
+@media (max-width: 640px) {
+	.kk-homepage-grid {
+		grid-template-columns: 1fr;
+		gap: 1.25rem;
+	}
 	
+	.kk-homepage-grid--columns-4,
+	.kk-homepage-grid--columns-3,
 	.kk-homepage-grid--columns-2 {
 		grid-template-columns: 1fr;
 	}
 	
 	.kk-homepage-card {
-		padding: 1rem;
-		border-radius: 18px;
+		padding: 1.1rem;
+		border-radius: 20px;
 	}
 	
 	.kk-homepage-card__title {
-		font-size: 1.1rem;
+		font-size: 1.15rem;
+	}
+	
+	.kk-homepage-card__download {
+		min-height: 48px;
+		padding: 0.75rem 1.25rem;
 	}
 }
 

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "provider": {
+    "ollama": {
+      "options": {
+        "baseURL": "http://172.17.0.1:11434"
+      }
+    }
+  }
+}

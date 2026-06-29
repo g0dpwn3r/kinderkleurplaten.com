@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   wordpress:
     image: wordpress:latest
@@ -13,4 +11,9 @@ services:
       WORDPRESS_DB_PASSWORD: '#5VyzWQ0$$8$$haHEbW5UURBoL&WcGq|tRXmk|ASVmuQnet0JDTB'
       WORDPRESS_DB_NAME: kinderkleurplaten
     volumes:
-      - /DATA/AppData/kinderkleurplaten.nl:/var/www/html
+      - /mnt/data_ssd/kinderkleurplaten/kinderkleurplaten.nl:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
