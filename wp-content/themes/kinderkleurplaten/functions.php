@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('KINDERKLEURPLATEN_VERSION', '1.0.1');
+define('KINDERKLEURPLATEN_VERSION', '1.0.2');
 
 add_action('after_setup_theme', 'kk_theme_setup');
 function kk_theme_setup() {
@@ -23,6 +23,20 @@ function kk_theme_setup() {
 		'script',
 	));
 	add_theme_support('responsive-embeds');
+}
+
+// Eénmalig de categorie-thumbnail cache flushen na een thema-update.
+add_action('init', 'kk_flush_category_cache_on_version_change', 5);
+function kk_flush_category_cache_on_version_change() {
+	$stored_version = get_option('kinderkleurplaten_version', '');
+	if ($stored_version !== KINDERKLEURPLATEN_VERSION) {
+		// Eerst markeren dat we deze versie hebben verwerkt, zodat een
+		// eventuele fout tijdens het rebuilden niet tot een flush-loop leidt.
+		update_option('kinderkleurplaten_version', KINDERKLEURPLATEN_VERSION, false);
+		if (function_exists('kk_invalidate_category_cache')) {
+			kk_invalidate_category_cache();
+		}
+	}
 }
 
 add_action('wp_enqueue_scripts', 'kk_enqueue_theme_styles');
@@ -52,7 +66,7 @@ if (!function_exists('kinderkleurplaten_get_colouring_image_url')) {
 	}
 }
 
-if (!function_exists('kinderkleurplaten_find_colouring_image')) {
+	if (!function_exists('kinderkleurplaten_find_colouring_image')) {
 	/**
 	 * zoekt de uitgelichte afbeelding (post thumbnail) van een kleurplaat.
 	 *
@@ -61,9 +75,9 @@ if (!function_exists('kinderkleurplaten_find_colouring_image')) {
 	 *
 	 * Gebruik 2 (archive):    kinderkleurplaten_find_colouring_image()
 	 *   → Op een taxonomy-archive van 'kleurplaat_categorie': haalt de
-	 *     eerste kleurplaat uit de huidige term en geeft diens featured
-	 *     image terug. Wordt gebruikt als banner / fallback afbeelding
-	 *     voor de archive header.
+	 *     meest recente kleurplaat met een geldige featured image uit de
+	 *     huidige term. Gebruikt daarnaast het opgeslagen termmeta
+	 *     thumbnail_id indien beschikbaar.
 	 *
 	 * @param int|null $post_id  Post-ID, of null voor archive-context.
 	 * @return array|false  Array met keys 'id' (attachment ID), 'url', 'alt'.
@@ -82,6 +96,20 @@ if (!function_exists('kinderkleurplaten_find_colouring_image')) {
 				return false;
 			}
 
+			// 1. Probeer het opgeslagen termmeta thumbnail_id.
+			$term_thumb_id = get_term_meta($term->term_id, 'thumbnail_id', true);
+			if ($term_thumb_id) {
+				$image_data = wp_get_attachment_image_src((int) $term_thumb_id, 'full');
+				if (!empty($image_data[0])) {
+					return array(
+						'id'  => (int) $term_thumb_id,
+						'url' => esc_url($image_data[0]),
+						'alt' => esc_attr(get_post_meta((int) $term_thumb_id, '_wp_attachment_image_alt', true)),
+					);
+				}
+			}
+
+			// 2. Fallback: meest recente kleurplaat die WERKELIJK een thumbnail heeft.
 			$first = new WP_Query(array(
 				'post_type'      => 'kleurplaten',
 				'post_status'    => 'publish',
@@ -94,6 +122,13 @@ if (!function_exists('kinderkleurplaten_find_colouring_image')) {
 						'field'            => 'term_id',
 						'terms'            => $term->term_id,
 						'include_children' => true,
+					),
+				),
+				'meta_query'     => array(
+					array(
+						'key'     => '_thumbnail_id',
+						'value'   => '',
+						'compare' => '!=',
 					),
 				),
 				'fields'         => 'ids',
@@ -581,8 +616,10 @@ document.addEventListener('DOMContentLoaded',initPrintButtons);
 
 if (!function_exists('kk_get_category_dynamic_thumbnail')) {
     /**
-     * Haalt de featured image op van de eerste kleurplaat in de opgegeven
-     * categorie. Wordt gebruikt als dynamisch logo / thumbnail op
+     * Haalt de featured image op van de meest recente kleurplaat in de
+     * opgegeven categorie die daadwerkelijk een thumbnail heeft.
+     * Gebruikt eerst het opgeslagen termmeta thumbnail_id; anders een
+     * WP_Query fallback. Wordt gebruikt als dynamisch logo / thumbnail op
      * categoriekaarten in plaats van een statisch icoon.
      *
      * Werkt op de officiële custom taxonomy 'kleurplaat_categorie' die aan
@@ -598,6 +635,19 @@ if (!function_exists('kk_get_category_dynamic_thumbnail')) {
             return '';
         }
 
+        // 1. Gebruik het opgeslagen termmeta thumbnail_id indien geldig.
+        $term_thumb_id = get_term_meta($term_id, 'thumbnail_id', true);
+        if ($term_thumb_id) {
+            $image = wp_get_attachment_image((int) $term_thumb_id, $size, false, array(
+                'alt'     => get_term_meta($term_id, 'name', true) ?: '',
+                'loading' => 'lazy',
+            ));
+            if ($image) {
+                return $image;
+            }
+        }
+
+        // 2. Fallback: meest recente kleurplaat MET een thumbnail.
         $query = new WP_Query(array(
             'post_type'      => 'kleurplaten',
             'post_status'    => 'publish',
@@ -610,6 +660,13 @@ if (!function_exists('kk_get_category_dynamic_thumbnail')) {
                     'field'    => 'term_id',
                     'terms'    => $term_id,
                     'include_children' => true,
+                ),
+            ),
+            'meta_query'     => array(
+                array(
+                    'key'     => '_thumbnail_id',
+                    'value'   => '',
+                    'compare' => '!=',
                 ),
             ),
             'fields'         => 'ids',
@@ -670,7 +727,11 @@ if (!function_exists('kk_get_all_categories_with_thumbnails')) {
      * PERFORMANCE-OPTIMIZED: Haalt alle categorieën + hun eerste kleurplaat-thumbnail
      * op in één batch en cached het resultaat in een WordPress transient.
      *
-     * Dit elimineert het N+1 query probleem (1400+ queries → 1 query + cache read).
+     * Gebruikt eerst het opgeslagen termmeta thumbnail_id (meegegeven door de
+     * self-healing mu-plugins). Als die ontbreekt of ongeldig is, wordt de
+     * meest recente kleurplaat met een geldige thumbnail gevonden via één
+     * enkele SQL-query (geen N+1 WP_Query per term).
+     *
      * Cache TTL: 12 uur (43200 seconden).
      *
      * @param string $image_size WP image size voor thumbnails (default: 'medium_large').
@@ -692,43 +753,89 @@ if (!function_exists('kk_get_all_categories_with_thumbnails')) {
             return array();
         }
 
-        $result = array();
-
+        // Indexeer termen op term_id voor snelle lookup.
+        $terms_by_id = array();
         foreach ($terms as $term) {
-            // Zoek de eerste kleurplaat in deze categorie (minimal query).
-            $first_post_query = new WP_Query(array(
-                'post_type'      => 'kleurplaten',
-                'post_status'    => 'publish',
-                'posts_per_page' => 1,
-                'orderby'        => 'date',
-                'order'          => 'DESC',
-                'tax_query'      => array(
-                    array(
-                        'taxonomy'         => 'kleurplaat_categorie',
-                        'field'            => 'term_id',
-                        'terms'            => $term->term_id,
-                        'include_children' => true,
-                    ),
-                ),
-                'fields'         => 'ids',
-                'no_found_rows'  => true,
-            ));
+            $terms_by_id[(int) $term->term_id] = $term;
+        }
 
-            $thumbnail_html = '';
+        // 1. Verzamel opgeslagen termmeta thumbnail_id in één query.
+        $term_thumbs = array();
+        if (!empty($terms_by_id)) {
+            global $wpdb;
+            $term_ids = array_keys($terms_by_id);
+            $placeholders = implode(',', array_fill(0, count($term_ids), '%d'));
+            $meta_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT term_id, meta_value FROM {$wpdb->termmeta}
+                     WHERE meta_key = 'thumbnail_id'
+                       AND term_id IN ($placeholders)
+                       AND meta_value != ''
+                       AND meta_value != '0'",
+                    $term_ids
+                )
+            );
+            foreach ($meta_rows as $row) {
+                $term_thumbs[(int) $row->term_id] = (int) $row->meta_value;
+            }
+        }
 
-            if ($first_post_query->have_posts()) {
-                $first_post_id = $first_post_query->posts[0];
-                $thumbnail_id = get_post_thumbnail_id($first_post_id);
+        // 2. Voor termen zonder termmeta: vind de meest recente kleurplaat MET
+        //    een thumbnail in één SQL query. We laden alle relevante rijen en
+        //    houden in PHP alleen de eerste per term_id (dankzij ORDER BY).
+        $fallback_thumbs = array();
+        $missing_term_ids = array_diff(array_keys($terms_by_id), array_keys($term_thumbs));
 
-                if ($thumbnail_id) {
-                    $thumbnail_html = wp_get_attachment_image($thumbnail_id, $image_size, false, array(
-                        'alt'     => get_the_title($first_post_id),
-                        'loading' => 'lazy',
-                    ));
+        if (!empty($missing_term_ids)) {
+            global $wpdb;
+            $placeholders = implode(',', array_fill(0, count($missing_term_ids), '%d'));
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT tt.term_id, p.ID AS post_id, CAST(pm.meta_value AS UNSIGNED) AS thumbnail_id
+                     FROM {$wpdb->term_taxonomy} tt
+                     INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                     INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id
+                         AND p.post_type = 'kleurplaten'
+                         AND p.post_status = 'publish'
+                     INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+                         AND pm.meta_key = '_thumbnail_id'
+                         AND pm.meta_value != ''
+                         AND pm.meta_value != '0'
+                     WHERE tt.taxonomy = 'kleurplaat_categorie'
+                       AND tt.term_id IN ($placeholders)
+                     ORDER BY tt.term_id ASC, p.post_date DESC",
+                    $missing_term_ids
+                )
+            );
+
+            foreach ($rows as $row) {
+                $tid = (int) $row->term_id;
+                if (!isset($fallback_thumbs[$tid])) {
+                    $fallback_thumbs[$tid] = array(
+                        'post_id'      => (int) $row->post_id,
+                        'thumbnail_id' => (int) $row->thumbnail_id,
+                    );
                 }
             }
+        }
 
-            wp_reset_postdata();
+        // 3. Bouw het resultaat: HTML per term.
+        $result = array();
+        foreach ($terms as $term) {
+            $term_id = (int) $term->term_id;
+            $thumbnail_html = '';
+
+            if (isset($term_thumbs[$term_id])) {
+                $thumbnail_html = wp_get_attachment_image($term_thumbs[$term_id], $image_size, false, array(
+                    'alt'     => $term->name,
+                    'loading' => 'lazy',
+                ));
+            } elseif (isset($fallback_thumbs[$term_id])) {
+                $thumbnail_html = wp_get_attachment_image($fallback_thumbs[$term_id]['thumbnail_id'], $image_size, false, array(
+                    'alt'     => get_the_title($fallback_thumbs[$term_id]['post_id']),
+                    'loading' => 'lazy',
+                ));
+            }
 
             $result[] = array(
                 'term'           => $term,
@@ -749,10 +856,19 @@ if (!function_exists('kk_invalidate_category_cache')) {
      * Wordt aangeroepen via cache invalidation hooks bij content-wijzigingen.
      */
     function kk_invalidate_category_cache() {
-        // Wis transients voor alle mogelijke image sizes.
+        global $wpdb;
+
+        // Wis transients voor de bekende image sizes.
         delete_transient('kk_categories_with_thumbs_' . md5('medium_large'));
         delete_transient('kk_categories_with_thumbs_' . md5('medium'));
         delete_transient('kk_categories_with_thumbs_' . md5('thumbnail'));
+
+        // Wis ook eventuele transients voor andere image sizes via directe DB-query.
+        $wpdb->query(
+            "DELETE FROM {$wpdb->options}
+             WHERE option_name LIKE '_transient_kk_categories_with_thumbs_%'
+                OR option_name LIKE '_transient_timeout_kk_categories_with_thumbs_%'"
+        );
     }
 }
 
