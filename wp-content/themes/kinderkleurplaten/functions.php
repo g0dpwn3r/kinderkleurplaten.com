@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('KINDERKLEURPLATEN_VERSION', '1.0.2');
+define('KINDERKLEURPLATEN_VERSION', '1.0.3');
 
 add_action('after_setup_theme', 'kk_theme_setup');
 function kk_theme_setup() {
@@ -23,6 +23,19 @@ function kk_theme_setup() {
 		'script',
 	));
 	add_theme_support('responsive-embeds');
+	register_nav_menus(array(
+		'primary' => __('Hoofdmenu', 'kinderkleurplaten'),
+		'footer'  => __('Footermenu', 'kinderkleurplaten'),
+	));
+}
+
+if (!function_exists('kinderkleurplaten_fallback_menu')) {
+	function kinderkleurplaten_fallback_menu() {
+		echo '<ul>';
+		echo '<li><a href="' . esc_url(home_url('/')) . '">' . esc_html__('Home', 'kinderkleurplaten') . '</a></li>';
+		echo '<li><a href="' . esc_url(home_url('/kleurplaten/')) . '">' . esc_html__('Kleurplaten', 'kinderkleurplaten') . '</a></li>';
+		echo '</ul>';
+	}
 }
 
 // Eénmalig de categorie-thumbnail cache flushen na een thema-update.
@@ -42,6 +55,13 @@ function kk_flush_category_cache_on_version_change() {
 add_action('wp_enqueue_scripts', 'kk_enqueue_theme_styles');
 function kk_enqueue_theme_styles() {
 	wp_enqueue_style('kinderkleurplaten-style', get_stylesheet_uri(), array(), KINDERKLEURPLATEN_VERSION);
+	wp_enqueue_script(
+		'kinderkleurplaten-main',
+		get_template_directory_uri() . '/assets/js/main.js',
+		array(),
+		KINDERKLEURPLATEN_VERSION,
+		true
+	);
 }
 
 if (!function_exists('kinderkleurplaten_get_colouring_image_url')) {
