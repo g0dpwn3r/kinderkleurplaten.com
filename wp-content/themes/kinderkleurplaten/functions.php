@@ -569,6 +569,184 @@ function kinderkleurplaten_breadcrumbs() {
     echo '<div class="kk-breadcrumbs" style="font-size: 14px; margin-bottom: 20px; color: #666;"><a href="' . home_url() . '" style="color: #ffb6c1; text-decoration: none;">Home</a> &raquo; ' . esc_html(get_the_title()) . '</div>';
 }
 
+/**
+ * Verwijdert herhaalde SEO-intro- en footer-blokken uit de content van
+ * kleurplaat-posts.
+ *
+ * Root-cause: bulk_categorize_existing.py prependde de SEO-blok meermaals
+ * aan dezelfde post (omdat het de 'rendered' content gebruikte). Resultaat:
+ * twee (of meer) identieke <h2>+<p> intro's bovenaan en identieke "Zie ook"
+ * / "Bekijk"-footers.
+ *
+ * Aanpak:
+ *  1. Verwijder alle <h2 class="seo-subtitle">...</h2><p>...</p> intro-
+ *     blocen NA de eerste.
+ *  2. Verwijder alle <p style="...">...</p> met "Zie ook" / "Bekijk" NA de
+ *     eerste.
+ *  3. Verwijder het eerste <img> (de featured image wordt al apart getoond).
+ *
+ * Werkt op HTML-niveau (na wpautop, priority 12).
+ */
+if (!function_exists('kk_deduplicate_kleurplaat_content')) {
+
+    /**
+     * Verwijdert ALLE <h2 class="seo-subtitle">...</h2><p>...</p> blokken
+     * behalve de eerste. Matcht over meerdere regels heen (DOTALL).
+     */
+    function kk_strip_duplicate_intro_blocks($content) {
+        if (empty($content)) {
+            return $content;
+        }
+
+        // Match één of meer intro-blokken achter elkaar.
+        // Elk blok = <h2 class="seo-subtitle">...</h2><spatie><p>...</p>
+        // We verwijderen alles behalve het allereerste blok.
+        $first_match = 0;
+        $pattern     = '/\s*<h2\s+class=["\']seo-subtitle["\'][^>]*>.*?<\/h2>\s*<p[^>]*>.*?<\/p>/si';
+
+        return preg_replace_callback($pattern, function ($m) use (&$first_match) {
+            $first_match++;
+            // Bewaar de eerste, verwijder de rest.
+            return ($first_match === 1) ? $m[0] : '';
+        }, $content);
+    }
+
+    /**
+     * Verwijdert ALLE <p style="...">...Zie ook / Bekijk...</p> blokken
+     * behalve de eerste.
+     */
+    function kk_strip_duplicate_footer_blocks($content) {
+        if (empty($content)) {
+            return $content;
+        }
+
+        $first_match = 0;
+        // Match <p ...style...> met tekst die begint met "Zie ook" of "Bekijk".
+        $pattern = '/\s*<p[^>]*style=["\'][^"\']*["\'][^>]*>\s*(?:Zie ook|Bekijk).*?<\/p>/si';
+
+        return preg_replace_callback($pattern, function ($m) use (&$first_match) {
+            $first_match++;
+            return ($first_match === 1) ? $m[0] : '';
+        }, $content);
+    }
+
+    /**
+     * Extra veiligheidsnet: verwijdert <p>...</p> zonder style die met
+     * "Zie ook onze andere" of "Bekijk onze" beginnen (voor gevallen waar
+     * het style-attribuut ontbreekt).
+     */
+    function kk_strip_duplicate_plain_footers($content) {
+        if (empty($content)) {
+            return $content;
+        }
+
+        $first_match = 0;
+        $pattern     = '/\s*<p[^>]*>\s*(?:Zie ook onze andere|Bekijk onze galerij).*?<\/p>/si';
+
+        return preg_replace_callback($pattern, function ($m) use (&$first_match) {
+            $first_match++;
+            return ($first_match === 1) ? $m[0] : '';
+        }, $content);
+    }
+}
+
+// Priority 8: vóór wpautop, werkt op de rauwe post_content.
+// Verwijdert het eerste <img> dat al via the_post_thumbnail() wordt getoond.
+add_filter('the_content', 'kk_kleurplaat_content_pre', 8);
+function kk_kleurplaat_content_pre($content) {
+    if (!is_singular('kleurplaten') || empty($content)) {
+        return $content;
+    }
+    return preg_replace('/<img[^>]*>/i', '', $content, 1);
+}
+
+/**
+ * Verwijdert featured-image <img>-tags die door WPCode of andere plugins
+ * aan het begin van de content worden geïnjecteerd (via "Insert Before
+ * Content"). Deze injectie bevat:
+ *   1. Een <div> met een <img> die dezelfde URL heeft als de featured
+ *      image van de post.
+ *   2. Een <script> met de functie printOfDownload.
+ *   3. Een <button> met onclick="printOfDownload(...)".
+ *   4. Een <br> tag.
+ *
+ * De featured image wordt al getoond via the_post_thumbnail() in single.php,
+ * dus deze dubbele moeten eruit.
+ *
+ * Werkt op HTML-niveau (na wpautop, priority 10+). Prioriteit 20 zodat
+ * we na mogelijke WPCode auto-inserts draaien.
+ */
+if (!function_exists('kk_strip_featured_image_injection')) {
+    function kk_strip_featured_image_injection($content) {
+        if (!is_singular('kleurplaten') || empty($content)) {
+            return $content;
+        }
+
+        global $post;
+
+        // 1) Verwijder het inline <script> blok dat de printOfDownload-functie
+        //    definieert (plugin-injectie).
+        $content = preg_replace(
+            '#<script>\s*function\s+printOfDownload\b.*?</script>\s*#si',
+            '',
+            $content
+        );
+
+        // 2) Verwijder de <br> tag die voor de button werd gezet.
+        $content = preg_replace('#\s*<br\s*/?>\s*#i', "\n", $content);
+
+        // 3) Verwijder de <button onclick="printOfDownload(...)">...</button>.
+        $content = preg_replace(
+            '#\s*<button[^>]*onclick=["\']printOfDownload\([^)]*\)["\'][^>]*>.*?</button>\s*#si',
+            '',
+            $content
+        );
+
+        // Haal de featured image URL op om gerichte img-stripping te doen.
+        $thumb_id  = get_post_thumbnail_id($post);
+        if ($thumb_id) {
+            $thumb_url = wp_get_attachment_url($thumb_id);
+            if ($thumb_url) {
+                $thumb_url_escaped = preg_quote($thumb_url, '/');
+
+                // 4) Verwijder ALLE <img>-tags met dezelfde src als de featured image.
+                $content = preg_replace(
+                    '/<img\b[^>]*\bsrc=["\']' . $thumb_url_escaped . '["\'][^>]*>\s*/i',
+                    '',
+                    $content
+                );
+            }
+        }
+
+        // 5) Verwijder lege <div>s die achterbleven (bijv. wrappers van de injectie).
+        $content = preg_replace('/<div[^>]*>\s*<\/div>\s*/i', '', $content);
+
+        return $content;
+    }
+}
+add_filter('the_content', 'kk_strip_featured_image_injection', 20);
+
+// Priority 12: ná wpautop, werkt op de verwerkte HTML.
+add_filter('the_content', 'kk_kleurplaat_content_dedup', 12);
+function kk_kleurplaat_content_dedup($content) {
+    if (!is_singular('kleurplaten') || empty($content)) {
+        return $content;
+    }
+
+    $content = kk_strip_duplicate_intro_blocks($content);
+    $content = kk_strip_duplicate_footer_blocks($content);
+    $content = kk_strip_duplicate_plain_footers($content);
+
+    // Ruim lege <p>-tags op die eventueel achterbleven.
+    $content = preg_replace('/<p[^>]*>\s*<\/p>\s*/', '', $content);
+
+    // Meerdere lege regels terugbrengen naar max. 2.
+    $content = preg_replace('/(\s*\n\s*){3,}/', "\n\n", $content);
+
+    return trim($content);
+}
+
+
 add_shortcode('print_kleurplaat', 'kk_print_kleurplaat_shortcode');
 function kk_print_kleurplaat_shortcode() {
     if (!is_singular('kleurplaten')) {

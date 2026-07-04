@@ -248,6 +248,50 @@ def build_seo_content(subject: str, subject_slug: str, colored: bool) -> str:
     return prepend, append
 
 
+def strip_existing_seo_content(content: str) -> str:
+    """
+    Verwijdert reeds geïnjecteerde SEO-blokken uit de content zodat
+    de functie idempotent is; meerdere keren aanroepen resulteert
+    niet in dubbele SEO-blocks.
+
+    Verwijdert:
+      - Alle <h2 class="seo-subtitle">...</h2> blokken + direct
+        daaropvolgende <p>...</p> die erbij horen (de intro).
+      - Alle <p style="...">...</p> blokken met "Zie ook" / "Bekijk"
+        footer-links.
+    """
+    # (a) Verwijder SEO-intro: <h2 class="seo-subtitle">...</h2> gevolgd
+    #     door <p>...</p>. We matchen non-greedy en case-insensitive;
+    #     eventuele witregels ertussen ook.
+    pattern_intro = (
+        r'<h2\s+class=["\']seo-subtitle["\'][^>]*>.*?</h2>\s*'
+        r'<p[^>]*>.*?</p>'
+    )
+    content = re.sub(pattern_intro, '', content, flags=re.DOTALL | re.IGNORECASE)
+
+    # (b) Verwijder SEO-footer: <p> met "Zie ook" of "Bekijk" + link.
+    pattern_footer = (
+        r'<p[^>]*style=["\'][^"\']*["\'][^>]*>\s*(?:Zie ook|Bekijk).*?</p>'
+    )
+    content = re.sub(pattern_footer, '', content, flags=re.DOTALL | re.IGNORECASE)
+
+    # (c) Extra: verwijder óók <p> zonder style die "Zie ook" bevatten,
+    #     voor het geval het style-attribuut ontbreekt.
+    pattern_footer_plain = (
+        r'<p[^>]*>\s*(?:Zie ook onze andere|Bekijk onze galerij).*?</p>'
+    )
+    content = re.sub(pattern_footer_plain, '', content, flags=re.DOTALL | re.IGNORECASE)
+
+    # (d) Ruim lege <p>-tags op die achterbleven.
+    content = re.sub(r'<p[^>]*>\s*</p>', '', content)
+
+    # (e) Ruim opeenvolgende lege regels op.
+    content = re.sub(r'(\s*\n){3,}', '\n\n', content)
+
+    return content.strip()
+
+
+
 def update_post_taxonomy(post_id, item_ids, wp_url, auth, taxonomy_type, subject, subject_slug, colored):
     """Update post with taxonomy item IDs AND inject SEO content."""
     config = taxonomy_config(taxonomy_type)
@@ -255,10 +299,15 @@ def update_post_taxonomy(post_id, item_ids, wp_url, auth, taxonomy_type, subject
 
     api_base = f"{wp_url.rstrip('/')}/wp-json/wp/v2/kleurplaten/{post_id}"
 
+    # Fetch met context=edit zodat we de 'raw' content krijgen; voorkomt
+    # dat we de eerder geïnjecteerde (rendered) SEO-blok opnieuw inpakken.
+    api_params = {"context": "edit"}
+
     try:
         get_response = requests.get(
             api_base,
             auth=auth,
+            params=api_params,
             timeout=REQUEST_TIMEOUT,
         )
     except RequestException as e:
@@ -275,8 +324,13 @@ def update_post_taxonomy(post_id, item_ids, wp_url, auth, taxonomy_type, subject
         print(f"[ERROR] Failed to parse post {post_id} response: {e}")
         return None
 
-    current_content = post_data.get("content", {}).get("rendered", "")
-    updated_content = f"{prepend}{current_content}{append}"
+    # Gebruik raw content indien beschikbaar, anders rendered — maar
+    # strip altijd eerst bestaande SEO-blokken zodat de functie
+    # idempotent is.
+    raw_content = post_data.get("content", {}).get("raw", "")
+    current_content = raw_content if raw_content else post_data.get("content", {}).get("rendered", "")
+    cleaned_content = strip_existing_seo_content(current_content)
+    updated_content = f"{prepend}\n{cleaned_content}\n{append}"
 
     try:
         response = requests.put(

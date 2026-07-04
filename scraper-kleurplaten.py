@@ -30,11 +30,16 @@ IMAGE_API_URL = "https://router.huggingface.co/hf-inference/v1/models/black-fore
 def generate_metadata(theme: str) -> dict:
     """Genereert metadata via InferenceClient (voorkomt 400 errors)."""
     system_prompt = (
-        "Je bent een creatieve assistent voor een kleurplaten-website. "
-        "Geef enkel een JSON-object terug met: 'title' (aantrekkelijke Nederlandse titel), "
-        "'image_prompt' (een gedetailleerde prompt in het Engels voor een kleurplaat: "
-        "zwart-witte lijntekening, dikke zwarte contouren, witte achtergrond, minimalistisch), "
-        "en 'factoid' (een interessant weetje in het Nederlands over het thema)."
+        "Je bent een creatieve assistent voor een kleurplaten-website voor kinderen. "
+        "Geef enkel een JSON-object terug met de volgende velden:\n"
+        "1. 'title': een aantrekkelijke Nederlandse titel (bijv. 'Dino-vriendjes Kleurplaat')\n"
+        "2. 'image_prompt': een gedetailleerde prompt in het Engels voor een kleurplaat: "
+        "zwart-witte lijntekening, dikke zwarte contouren, witte achtergrond, minimalistisch, "
+        "kindvriendelijk, simpel design\n"
+        "3. 'factoid': EEN kort weetje in het Nederlands (max 2 zinnen, max 40 woorden) "
+        "over het thema. Schrijf correct Nederlands - gebruik samengestelde woorden zoals "
+        "'dinosaurussen', 'boerderijdieren', 'herfstgeheimen' (NIET 'Herfstse'). "
+        "Genereer GEEN dupliceerde of herhaalde tekst. Het moet uniek zijn."
     )
     
     try:
