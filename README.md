@@ -104,6 +104,57 @@ Example:
 python test_connection.py
 ```
 
+### `enrich_kleurplaat_content.py` (SEO content enrichment)
+
+Generates a rich, unique content block (intro, details table, how-to
+guide, long-tail keywords) for every kleurplaat-post. Built to resolve
+Google AdSense "Thin Content" rejections by replacing the previous
+~40-word factoid with 250–350 unique words of varied, theme-aware copy.
+
+The module is imported automatically by `scraper-kleurplaten.py` for
+new posts, and can be run stand-alone to backfill all existing posts.
+
+Key features:
+
+- 4+ template variants per section + synonym rotation for
+  "kleurplaat" (kleurtekening / inkleuropdracht / kleurplaatje / …) to
+  defeat AI-spam detection.
+- 50+ rich theme profiles (dinosaurs, dogs, unicorns, Christmas, …)
+  with specific color tips and educational value statements.
+- Idempotent: `<!-- KK-ENRICH-START -->` … `<!-- KK-ENRICH-END -->`
+  markers, so re-running the script never duplicates content and also
+  strips any previous weak `seo-subtitle` blocks left by
+  `bulk_categorize_existing.py` or `fix_duplicate_seo_content.py`.
+
+Example — preview without touching WordPress:
+
+```bash
+python preview_enrichment.py --theme "Dinosaurussen" --runs 3
+```
+
+Example — dry-run on 5 existing posts:
+
+```bash
+python enrich_existing_posts.py --dry-run --limit 5
+```
+
+Example — enrich every existing post (rate-limited):
+
+```bash
+python enrich_existing_posts.py --delay 0.5
+```
+
+### `preview_enrichment.py`
+
+Quick local preview of enrichment output for a given theme, without
+calling the WordPress API. Useful for verifying variation, checking
+fallback behavior for unknown themes, and tweaking the template library
+before doing a bulk run.
+
+```bash
+python preview_enrichment.py --theme "Eenhoorns" --runs 5 --with-factoid
+```
+
 ## Local setup
 
 Create a virtual environment:

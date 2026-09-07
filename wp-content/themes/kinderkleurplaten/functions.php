@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-define('KINDERKLEURPLATEN_VERSION', '1.0.3');
+define('KINDERKLEURPLATEN_VERSION', '1.0.4');
 
 add_action('after_setup_theme', 'kk_theme_setup');
 function kk_theme_setup() {

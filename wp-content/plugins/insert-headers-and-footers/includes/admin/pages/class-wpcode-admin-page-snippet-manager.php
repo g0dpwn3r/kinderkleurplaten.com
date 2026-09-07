@@ -364,6 +364,8 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 	 */
 	public function show_snippet_library() {
 		$library_data     = wpcode()->library->get_data();
+		// Packs are their own taxonomy and never appear in the library
+		// `categories` list, so no filtering is needed here.
 		$categories       = $library_data['categories'];
 		$snippets         = $library_data['snippets'];
 		$default_category = isset( $categories[0]['slug'] ) ? $categories[0]['slug'] : '';
@@ -373,14 +375,24 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 			$snippets
 		);
 
+		$packs_view   = class_exists( 'WPCode_Packs_View' ) ? new WPCode_Packs_View() : null;
+		$packs_active = $packs_view && $packs_view->is_active_tab();
+		$tab_active     = $packs_active ? 'packs' : 'library';
+
 		?>
 		<div class="wpcode-library-tab-navigation">
-			<button class="wpcode-library-tab-button wpcode-library-tab-button-active" data-tab="library" role="button">
+			<button class="wpcode-library-tab-button <?php echo 'library' === $tab_active ? 'wpcode-library-tab-button-active' : ''; ?>" data-tab="library" role="button">
 				<?php esc_html_e( 'Snippet Library', 'insert-headers-and-footers' ); ?>
 			</button>
-			<button class="wpcode-library-tab-button " data-tab="generator" role="button">
+			<button class="wpcode-library-tab-button" data-tab="generator" role="button">
 				<?php esc_html_e( 'Snippet Generators', 'insert-headers-and-footers' ); ?>
 			</button>
+			<?php if ( $packs_view ) : ?>
+				<button class="wpcode-library-tab-button <?php echo 'packs' === $tab_active ? 'wpcode-library-tab-button-active' : ''; ?>" data-tab="packs" role="button">
+					<?php esc_html_e( 'Snippet Packs', 'insert-headers-and-footers' ); ?>
+					<span class="wpcode-tab-new-pill"><?php esc_html_e( 'NEW', 'insert-headers-and-footers' ); ?></span>
+				</button>
+			<?php endif; ?>
 			<button class="wpcode-library-tab-button" data-tab="plugin-snippets" role="button">
 				<?php esc_html_e( 'Plugin Snippets', 'insert-headers-and-footers' ); ?>
 			</button>
@@ -389,7 +401,7 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 			</button>
 		</div>
 		<div class="wpcode-library-tabs">
-			<div class="wpcode-library-tab wpcode-library-tab-active" data-tab="library">
+			<div class="wpcode-library-tab <?php echo 'library' === $tab_active ? 'wpcode-library-tab-active' : ''; ?>" data-tab="library">
 				<div class="wpcode-add-snippet-description">
 					<?php
 					$custom_url = add_query_arg(
@@ -442,6 +454,11 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 					</div>
 				</div>
 			</div>
+			<?php if ( $packs_view ) : ?>
+				<div class="wpcode-library-tab <?php echo 'packs' === $tab_active ? 'wpcode-library-tab-active' : ''; ?>" data-tab="packs">
+					<?php $packs_view->render_tab_content(); ?>
+				</div>
+			<?php endif; ?>
 			<div class="wpcode-library-tab" data-tab="plugin-snippets">
 				<div class="wpcode-add-snippet-description">
 					<?php esc_html_e( 'Easily add code snippets that extend other plugins on your site from a library maintained by the plugin authors.', 'insert-headers-and-footers' ); ?>
@@ -1247,6 +1264,7 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 					'page'       => 'wpcode-snippet-manager',
 					'snippet_id' => $this->snippet->get_id(),
 					'sync'       => 'true',
+					'_wpnonce'   => wp_create_nonce( 'wpcode_sync_snippet' ),
 				),
 				admin_url( 'admin.php' )
 			);
@@ -1298,6 +1316,7 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 			array(
 				'page'       => 'wpcode-live-preview',
 				'snippet_id' => $is_new_snippet ? 0 : $this->snippet_id,
+				'_wpnonce'   => wp_create_nonce( 'wpcode-live-preview' ),
 			),
 			admin_url( 'admin.php' )
 		);
@@ -1373,6 +1392,14 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 		$code_type    = isset( $_POST['wpcode_snippet_type'] ) ? sanitize_text_field( wp_unslash( $_POST['wpcode_snippet_type'] ) ) : 'html';
 		$snippet_code = isset( $_POST['wpcode_snippet_code'] ) ? $_POST['wpcode_snippet_code'] : '';  // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+		// Bind the submitted code type to the user's tier and require object-level edit on an existing snippet.
+		$submitted_id        = empty( $_REQUEST['id'] ) ? 0 : absint( $_REQUEST['id'] );
+		$required_capability = class_exists( 'WPCode_Access' ) ? WPCode_Access::capability_for_code_type( $code_type ) : '';
+		$can_edit_type       = empty( $required_capability ) ? current_user_can( 'wpcode_edit_snippets' ) : current_user_can( $required_capability );
+		if ( ! $can_edit_type || ( $submitted_id && ! current_user_can( 'edit_post', $submitted_id ) ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to edit snippets of this type.', 'insert-headers-and-footers' ), '', array( 'response' => 403 ) );
+		}
+
 		if ( WPCode_Snippet_Execute::is_code_not_allowed( $snippet_code ) ) {
 			$title = esc_html__( 'Restricted Code Detected', 'insert-headers-and-footers' );
 			wp_die(
@@ -1389,6 +1416,11 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 
 		if ( 'text' === $code_type ) {
 			$snippet_code = wpautop( $snippet_code );
+		}
+
+		// Strip script/event-handler HTML from text snippets authored without unfiltered_html.
+		if ( 'text' === $code_type && ! current_user_can( 'unfiltered_html' ) ) {
+			$snippet_code = wp_kses_post( $snippet_code );
 		}
 
 		$tags = array();
@@ -1482,6 +1514,11 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 			}
 		}
 
+		// Only run on-demand execution if the user can activate this snippet's code type.
+		if ( $execute_now && ! current_user_can( 'wpcode_activate_snippets', $snippet ) ) {
+			$execute_now = false;
+		}
+
 		// Now that we saved the data, let's execute the snippet if needed.
 		if ( $execute_now ) {
 			wpcode()->execute->doing_activation(); // Mark this to unslash the code.
@@ -1521,6 +1558,21 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 	 */
 	public function page_scripts() {
 		if ( $this->show_library ) {
+			// Packs tab assets — only needed when the library/tabs view is shown.
+			// dashicons is auto-enqueued in WP admin; no extra icon font load.
+			wp_enqueue_style(
+				'wpcode-packs',
+				WPCODE_PLUGIN_URL . 'assets/css/admin-packs.css',
+				array(),
+				WPCODE_VERSION
+			);
+			wp_enqueue_script(
+				'wpcode-packs',
+				WPCODE_PLUGIN_URL . 'assets/js/admin/packs.js',
+				array(),
+				WPCODE_VERSION,
+				true
+			);
 			return;
 		}
 
@@ -2557,6 +2609,9 @@ class WPCode_Admin_Page_Snippet_Manager extends WPCode_Admin_Page {
 	 */
 	protected function sync_snippet() {
 		if ( ! isset( $this->snippet ) || ! current_user_can( 'wpcode_edit_snippets' ) ) { //phpcs:ignore
+			return;
+		}
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'wpcode_sync_snippet' ) ) {
 			return;
 		}
 

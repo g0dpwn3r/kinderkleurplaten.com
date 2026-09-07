@@ -4,7 +4,7 @@ Tags: code, css, php, header, code snippets
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.0
-Stable tag: 2.3.6
+Stable tag: 2.3.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -231,6 +231,9 @@ WPCode comes with a ready-made code snippets library that allows you to replace 
 ... and basically any plugin that adds a functionality which can be added via custom code snippets.
 
 == Changelog ==
+
+= 2.3.7 =
+* New: Set up a whole group of related snippets at once with Snippet Packs — pick a pack and install every snippet in it with a single click, then manage or remove a pack anytime while keeping any snippets you use across other packs.
 
 = 2.3.6 =
 * New: You can now easily tell where each library snippet came from — imported snippets show a small cloud badge and the originating library author (WPCode, WPForms, AIOSEO, and more).

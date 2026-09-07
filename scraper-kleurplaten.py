@@ -16,6 +16,15 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 DOTENV_PATH = SCRIPT_DIR / ".env"
 load_dotenv(dotenv_path=DOTENV_PATH)
 
+# Optionele import van de enrichment-module. Bij ImportError (bv. tijdens
+# CI/test of eerste deploy) valt de scraper automatisch terug op de
+# oude "factoid-only" content zodat niets breekt.
+try:
+    from enrich_kleurplaat_content import build_post_content as _build_kk_content
+    _ENRICHMENT_AVAILABLE = True
+except ImportError:
+    _ENRICHMENT_AVAILABLE = False
+
 HUGGINGFACE_TOKEN = os.getenv("HF_TOKEN")
 WP_URL = os.getenv("WORDPRESS_URL")
 WP_USERNAME = os.getenv("WORDPRESS_USERNAME")
@@ -338,6 +347,31 @@ def get_or_create_categories(category_names: list[str]) -> list[int] | None:
 # Upload & Post (met categorien)
 # ---------------------------------------------------------------------------
 
+def _build_kleurplaat_content(metadata: dict, theme_label: str) -> str:
+    """Bouw de rijke post_content voor een kleurplaat.
+
+    Combineert het AI-gegenereerde factoid met de deterministische
+    enrichment-templates uit ``enrich_kleurplaat_content`` (intro, tabel,
+    how-to, long-tail keywords). Valt terug op het kale factoid als de
+    enrichment-module niet beschikbaar is.
+    """
+    factoid = metadata.get("factoid", "") or ""
+    if not _ENRICHMENT_AVAILABLE:
+        return factoid or f"Veel plezier met kleuren van {theme_label}!"
+
+    try:
+        return _build_kk_content(
+            theme=theme_label,
+            factoid=factoid,
+            existing_content="",  # Nieuwe post, geen bestaande content.
+        )
+    except Exception as exc:
+        # Bij een onverwachte fout in de enrichment: log en val terug op
+        # het kale factoid zodat de post nog steeds aangemaakt kan worden.
+        print(f"[WAARSCHUWING] Enrichment faalde voor '{theme_label}': {exc}")
+        return factoid or f"Veel plezier met kleuren van {theme_label}!"
+
+
 def upload_and_post(metadata: dict, img_data: bytes, theme: str, i: int, categories: list[str] | None = None):
     files = {"file": (f"{theme}-{i}.png", img_data, "image/png")}
     media_resp = requests.post(f"{WP_URL}/wp-json/wp/v2/media", auth=(WP_USERNAME, WP_APP_PASSWORD), files=files)
@@ -372,7 +406,7 @@ def upload_and_post(metadata: dict, img_data: bytes, theme: str, i: int, categor
 
     post_payload = {
         "title": metadata['title'],
-        "content": metadata['factoid'],
+        "content": _build_kleurplaat_content(metadata, theme.replace("-", " ")),
         "status": "publish",
         "featured_media": media_id,
         "meta": {"kk_print_url": source_url},

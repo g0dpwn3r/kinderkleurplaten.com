@@ -111,6 +111,17 @@ class WPCode_Admin_Page_Code_Snippets extends WPCode_Admin_Page {
 			return;
 		}
 
+		// Only operate on wpcode snippets the current user is allowed to edit.
+		$ids = array_filter(
+			$ids,
+			function ( $id ) {
+				return 'wpcode' === get_post_type( $id ) && current_user_can( 'edit_post', $id );
+			}
+		);
+		if ( empty( $ids ) ) {
+			return;
+		}
+
 		$update_status_actions = array( 'trash', 'untrash' );
 
 		if ( in_array( $action, $update_status_actions, true ) ) {

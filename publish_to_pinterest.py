@@ -33,11 +33,32 @@ try:
     from dotenv import load_dotenv
     load_dotenv(dotenv_path=DOTENV_PATH)
 except ImportError:
-    pass
+    # Fallback: lees .env handmatig als python-dotenv niet beschikbaar is
+    if DOTENV_PATH.exists():
+        try:
+            with open(DOTENV_PATH, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    # Sla commentaar en lege regels over
+                    if not line or line.startswith("#"):
+                        continue
+                    # Parse KEY=VALUE formaat
+                    if "=" in line:
+                        key, value = line.split("=", 1)
+                        key = key.strip()
+                        value = value.strip()
+                        # Verwijder aanhalingstekens als die er zijn
+                        if value and len(value) >= 2:
+                            if (value.startswith('"') and value.endswith('"')) or \
+                               (value.startswith("'") and value.endswith("'")):
+                                value = value[1:-1]
+                        os.environ[key] = value
+        except Exception as exc:
+            print(f"[Config] Waarschuwing: kon .env niet handmatig laden: {exc}")
 
-PINTEREST_ACCESS_TOKEN = os.getenv("PINTEREST_ACCESS_TOKEN", "")
-PINTEREST_BOARD_ID = os.getenv("PINTEREST_BOARD_ID", "")
-PINTEREST_API_BASE = "https://api.pinterest.com/v5"
+PINTEREST_ACCESS_TOKEN = os.getenv("PINTEREST_ACCESS_TOKEN", "").strip()
+PINTEREST_BOARD_ID = os.getenv("PINTEREST_BOARD_ID", "").strip()
+PINTEREST_API_BASE = os.getenv("PINTEREST_API_URL", "https://api-sandbox.pinterest.com/v5").strip()
 PIN_BASE_URL = "https://www.kinderkleurplaten.com"  # geen trailing slash
 
 
@@ -338,15 +359,24 @@ class PinterestPublisher:
         site_base: str = PIN_BASE_URL,
     ):
         if not access_token:
+            access_token = PINTEREST_ACCESS_TOKEN
+        if not access_token:
             raise PinterestAPIError(
                 "PINTEREST_ACCESS_TOKEN ontbreekt. "
                 "Zie instructies onderaan dit bestand."
             )
+        
+        # Fallback naar PINTEREST_BOARD_ID uit environment als board_id leeg is
+        if not board_id:
+            board_id = os.getenv("PINTEREST_BOARD_ID", "").strip()
+        
         if not board_id:
             print(
                 "[Config] Waarschuwing: PINTEREST_BOARD_ID ontbreekt. "
                 "Geef bij dynamische board routing board_id per pin mee."
             )
+        else:
+            print(f"[Config] Fallback board ID: {board_id}")
 
         self.access_token = access_token
         self.board_id = board_id
@@ -521,7 +551,7 @@ class PinterestPublisher:
 
     def create_pin(
         self,
-        media_id: str,
+        media_source: dict,
         title: str,
         description: str,
         destination_url: str,
@@ -533,7 +563,9 @@ class PinterestPublisher:
         dynamisch gekozen Board.
 
         Args:
-            media_id:        ID returned door upload_image().
+            media_source:    Pinterest v5 media_source dict, bijv.:
+                             {"source_type": "image_url", "url": "https://..."}
+                             of {"source_type": "image_base64", "content_type": "image/png", "data": "..."}
             title:           Pin-titel (max. 100 tekens).
             description:     Pin-beschrijving (max. 500 tekens).
             destination_url: Volledige URL waar de pin naartoe leidt
@@ -559,9 +591,7 @@ class PinterestPublisher:
 
         pin_data: dict = {
             "board_id": target_board_id,
-            "media_source": {
-                "media_id": media_id,
-            },
+            "media_source": media_source,
             "title": title[:100],
             "description": description[:500],
             "link": destination_url,
@@ -582,6 +612,67 @@ class PinterestPublisher:
 
         return result
 
+    def publish_image_url(
+        self,
+        image_url: str,
+        subject: str,
+        wordpress_post_url: str,
+        alt_text: str = "",
+        title_template: str = "Gratis {subject} Kleurplaat",
+        description_template: str | None = None,
+        board_id: str | None = None,
+    ) -> dict | None:
+        """
+        Hoog-niveau methode: maakt een Pin aan door de afbeelding-URL
+        rechtstreeks naar Pinterest te sturen (geen download/upload nodig).
+
+        Dit is de meest efficiënte methode wanneer de afbeelding al online
+        staat (bijv. op WordPress). Pinterest downloadt de afbeelding zelf.
+
+        Args:
+            image_url:             Publieke URL van de afbeelding.
+            subject:               Het thema (bijv. "Dino", "Eenhoorn").
+            wordpress_post_url:    Volledige URL van de WordPress-post.
+            alt_text:              Alt-tekst voor de afbeelding.
+            title_template:        Titel; {subject} wordt vervangen.
+            description_template:  Optionele beschrijving; wordt gegenereerd als None.
+            board_id:              Optionele dynamische Pinterest Board ID.
+
+        Retourneert:
+            dict met pin-gegevens bij succes, None bij fout.
+        """
+        title = title_template.format(subject=subject)
+
+        if description_template is None:
+            description = self._build_seo_description(subject, wordpress_post_url)
+        else:
+            description = description_template.format(subject=subject)
+
+        media_source = {
+            "source_type": "image_url",
+            "url": image_url,
+        }
+
+        try:
+            pin_info = self.create_pin(
+                media_source=media_source,
+                title=title,
+                description=description,
+                destination_url=wordpress_post_url,
+                alt_text=alt_text or title,
+                board_id=board_id,
+            )
+            return pin_info
+
+        except PinterestAPIError as exc:
+            print(f"[Pinterest] API-fout: {exc}", file=sys.stderr)
+        except PinterestRateLimitError as exc:
+            print(f"[Pinterest] Rate-limit: {exc}", file=sys.stderr)
+        except Exception as exc:
+            print(f"[Pinterest] Onverwachte fout: {exc}", file=sys.stderr)
+
+        return None
+
     def publish_image(
         self,
         image_path: str,
@@ -593,14 +684,15 @@ class PinterestPublisher:
         board_id: str | None = None,
     ) -> dict | None:
         """
-        Hoog-niveau methode: uploadt een afbeelding en maakt direct een Pin.
+        Hoog-niveau methode: maakt een Pin aan van een lokale afbeelding
+        via base64-encoding (Pinterest v5 image_base64 media_source).
 
         Args:
-            image_path:          Pad naar de lokale afbeelding.
+            image_path:          Pad naar de lokale afbeelding (.png of .jpg).
             subject:             Het thema (bijv. "Dino", "Eenhoorn").
             wordpress_post_url:  Volledige URL van de WordPress-post.
             alt_text:            Alt-tekst voor de afbeelding.
-            title_template:      Jinlaag-vrije titel; {subject} wordt vervangen.
+            title_template:      Titel; {subject} wordt vervangen.
             description_template:Optionele beschrijving; wordt gegenereerd als None.
             board_id:            Optionele dynamische Pinterest Board ID.
 
@@ -615,9 +707,38 @@ class PinterestPublisher:
             description = description_template.format(subject=subject)
 
         try:
-            media_id = self.upload_image(image_path)
+            # Lees het bestand en encode naar base64
+            path = Path(image_path)
+            if not path.exists():
+                raise FileNotFoundError(f"Afbeeldingsbestand niet gevonden: {image_path}")
+
+            suffix = path.suffix.lower()
+            mime_types = {
+                ".png": "image/png",
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg",
+            }
+            content_type = mime_types.get(suffix)
+            if content_type is None:
+                raise ValueError(
+                    f"Niet-ondersteunde bestandsformaat '{suffix}'. "
+                    f"Ondersteund: {', '.join(mime_types.keys())}"
+                )
+
+            print(f"[Pinterest] Lokaal bestand lezen: {path.name} ({path.stat().st_size / 1024:.1f} KB)")
+            with open(path, "rb") as fh:
+                image_bytes = fh.read()
+
+            image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+
+            media_source = {
+                "source_type": "image_base64",
+                "content_type": content_type,
+                "data": image_b64,
+            }
+
             pin_info = self.create_pin(
-                media_id=media_id,
+                media_source=media_source,
                 title=title,
                 description=description,
                 destination_url=wordpress_post_url,
@@ -687,7 +808,7 @@ def main():
     )
     parser.add_argument(
         "--board-id",
-        default=os.getenv("PINTEREST_BOARD_ID", ""),
+        default=os.getenv("PINTEREST_BOARD_ID", "").strip(),
         help="Pinterest Board ID (overrideert .env).",
     )
     parser.add_argument(

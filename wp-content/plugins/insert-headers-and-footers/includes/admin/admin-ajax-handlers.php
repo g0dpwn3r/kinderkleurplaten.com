@@ -22,6 +22,10 @@ add_action( 'wp_ajax_wpcode_sync_snippet', 'wpcode_sync_snippet' );
 add_action( 'wp_ajax_wpcode_save_preview_css', 'wpcode_save_preview_css' );
 add_action( 'wp_ajax_wpcode_clear_preview_css', 'wpcode_clear_preview_css' );
 add_action( 'wp_ajax_wpcode_set_preview_css', 'wpcode_set_preview_css' );
+add_action( 'wp_ajax_wpcode_install_pack', 'wpcode_ajax_install_pack' );
+add_action( 'wp_ajax_wpcode_toggle_pack_option', 'wpcode_ajax_toggle_pack_option' );
+add_action( 'wp_ajax_wpcode_remove_pack', 'wpcode_ajax_remove_pack' );
+add_action( 'wp_ajax_wpcode_add_pack_option', 'wpcode_ajax_add_pack_option' );
 
 /**
  * Handles toggling a snippet status from the admin.
@@ -307,7 +311,10 @@ function wpcode_verify_ssl() {
 function wpcode_heartbeat_data( $response, $data, $screen_id ) {
 	if ( 'code-snippets_page_wpcode-snippet-manager' === $screen_id && isset( $data['wpcode_lock'] ) ) {
 		// Update the post lock while they are still editing.
-		wp_set_post_lock( absint( $data['wpcode_lock'] ) );
+		$post_id = absint( $data['wpcode_lock'] );
+		if ( $post_id && current_user_can( 'edit_post', $post_id ) ) {
+			wp_set_post_lock( $post_id );
+		}
 	}
 
 	return $response;
@@ -521,18 +528,21 @@ function wpcode_save_preview_css() {
 	// Check nonce.
 	check_ajax_referer( 'wpcode_admin', 'nonce' );
 
-	// Check permissions.
-	if ( ! current_user_can( 'wpcode_edit_snippets' ) ) { //phpcs:ignore
-		wp_send_json_error( array( 'message' => __( 'You do not have permission to edit snippets.', 'insert-headers-and-footers' ) ) );
+	$snippet_id = isset( $_POST['snippet_id'] ) ? absint( $_POST['snippet_id'] ) : 0;
+
+	// Check permissions against the specific snippet's code type.
+	if ( ! $snippet_id || ! current_user_can( 'edit_post', $snippet_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'You do not have permission to edit this snippet.', 'insert-headers-and-footers' ) ) );
 	}
 
-	$snippet_id  = isset( $_POST['snippet_id'] ) ? absint( $_POST['snippet_id'] ) : 0;
 	$css         = isset( $_POST['css'] ) ? wp_unslash( $_POST['css'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	$code_type   = isset( $_POST['code_type'] ) ? sanitize_text_field( wp_unslash( $_POST['code_type'] ) ) : '';
 	$source_code = isset( $_POST['source_code'] ) ? wp_unslash( $_POST['source_code'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-	if ( ! $snippet_id ) {
-		wp_send_json_error( array( 'message' => __( 'Invalid snippet ID.', 'insert-headers-and-footers' ) ) );
+	// Strip script/event-handler HTML from the stored code for authors without unfiltered_html.
+	if ( ! current_user_can( 'unfiltered_html' ) ) {
+		$css         = wp_kses_post( $css );
+		$source_code = wp_kses_post( $source_code );
 	}
 
 	// Get the snippet.
@@ -670,4 +680,175 @@ function wpcode_set_preview_css() {
 	}
 
 	wp_send_json_success( array( 'message' => __( 'Preview CSS stored.', 'insert-headers-and-footers' ) ) );
+}
+
+/**
+ * AJAX: install a pack.
+ *
+ * @return void
+ */
+function wpcode_ajax_install_pack() {
+	check_ajax_referer( 'wpcode_packs', 'nonce' );
+
+	if ( ! current_user_can( 'wpcode_edit_snippets' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'insert-headers-and-footers' ) ), 403 );
+	}
+
+	if ( ! wpcode()->library_auth->has_auth() ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Please connect to the WPCode Library to install packs.', 'insert-headers-and-footers' ),
+				'code'    => 'not_connected',
+			),
+			403
+		);
+	}
+
+	$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+	if ( '' === $slug ) {
+		wp_send_json_error( array( 'message' => __( 'Pack slug is required.', 'insert-headers-and-footers' ) ), 400 );
+	}
+
+	$result = WPCode_Packs::get_instance()->install_pack( $slug );
+
+	if ( ! $result['success'] ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Pack install failed.', 'insert-headers-and-footers' ),
+			),
+			500
+		);
+	}
+
+	wp_send_json_success(
+		array(
+			'result'       => $result,
+			'redirect_url' => add_query_arg(
+				array(
+					'page'   => 'wpcode-snippet-manager',
+					'tab'    => 'packs',
+					'pack' => $slug,
+				),
+				admin_url( 'admin.php' )
+			),
+		)
+	);
+}
+
+/**
+ * AJAX: toggle a pack option.
+ *
+ * @return void
+ */
+function wpcode_ajax_toggle_pack_option() {
+	check_ajax_referer( 'wpcode_packs', 'nonce' );
+
+	if ( ! current_user_can( 'wpcode_activate_snippets' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'insert-headers-and-footers' ) ), 403 );
+	}
+
+	$slug       = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+	$library_id = isset( $_POST['library_id'] ) ? (int) $_POST['library_id'] : 0;
+	$active     = isset( $_POST['active'] ) && '1' === $_POST['active'];
+
+	if ( '' === $slug || $library_id <= 0 ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid request.', 'insert-headers-and-footers' ) ), 400 );
+	}
+
+	$state = WPCode_Packs::get_instance()->toggle_option( $slug, $library_id, $active );
+	if ( null === $state ) {
+		wp_send_json_error( array( 'message' => __( 'Option not found.', 'insert-headers-and-footers' ) ), 404 );
+	}
+
+	// Return the real resulting state — activation can be refused if the snippet
+	// errors, in which case it stays inactive.
+	wp_send_json_success(
+		array(
+			'active'             => $state,
+			'activation_refused' => $active && ! $state,
+		)
+	);
+}
+
+/**
+ * AJAX: remove a pack.
+ *
+ * @return void
+ */
+function wpcode_ajax_remove_pack() {
+	check_ajax_referer( 'wpcode_packs', 'nonce' );
+
+	if ( ! current_user_can( 'wpcode_edit_snippets' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'insert-headers-and-footers' ) ), 403 );
+	}
+
+	$slug = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+	if ( '' === $slug ) {
+		wp_send_json_error( array( 'message' => __( 'Pack slug is required.', 'insert-headers-and-footers' ) ), 400 );
+	}
+
+	$deleted = WPCode_Packs::get_instance()->remove_pack( $slug );
+
+	wp_send_json_success(
+		array(
+			'deleted_count' => $deleted,
+			'redirect_url'  => add_query_arg(
+				array(
+					'page' => 'wpcode-snippet-manager',
+					'tab'  => 'packs',
+				),
+				admin_url( 'admin.php' )
+			),
+		)
+	);
+}
+
+/**
+ * AJAX: add a single pack option.
+ *
+ * @return void
+ */
+function wpcode_ajax_add_pack_option() {
+	check_ajax_referer( 'wpcode_packs', 'nonce' );
+
+	if ( ! current_user_can( 'wpcode_edit_snippets' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'insert-headers-and-footers' ) ), 403 );
+	}
+
+	if ( ! wpcode()->library_auth->has_auth() ) {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Please connect to the WPCode Library to add pack snippets.', 'insert-headers-and-footers' ),
+				'code'    => 'not_connected',
+			),
+			403
+		);
+	}
+
+	$slug       = isset( $_POST['slug'] ) ? sanitize_key( wp_unslash( $_POST['slug'] ) ) : '';
+	$library_id = isset( $_POST['library_id'] ) ? (int) $_POST['library_id'] : 0;
+
+	if ( '' === $slug || $library_id <= 0 ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid request.', 'insert-headers-and-footers' ) ), 400 );
+	}
+
+	$packs = WPCode_Packs::get_instance();
+	$created = $packs->add_option( $slug, $library_id );
+	if ( ! $created ) {
+		// The most common reason for failure is the snippet already being present
+		// (e.g. another pack installed it, or a concurrent add). Say so clearly
+		// and let the UI refresh to the installed state instead of erroring.
+		if ( $packs->find_local_snippet_by_library_id( $library_id ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'This snippet is already installed.', 'insert-headers-and-footers' ),
+					'code'    => 'already_installed',
+				),
+				409
+			);
+		}
+		wp_send_json_error( array( 'message' => __( 'Could not add option.', 'insert-headers-and-footers' ) ), 500 );
+	}
+
+	wp_send_json_success( array( 'snippet_id' => $created->get_id() ) );
 }

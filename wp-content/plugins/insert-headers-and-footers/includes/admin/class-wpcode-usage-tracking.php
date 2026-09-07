@@ -162,6 +162,11 @@ abstract class WPCode_Usage_Tracking {
 		// Add snippets data.
 		$data = array_merge( $data, $this->get_snippets_data() );
 
+		// Add installed packs (slugs only, no personal data).
+		if ( class_exists( 'WPCode_Packs' ) ) {
+			$data['wpcode_installed_packs'] = array_keys( WPCode_Packs::get_instance()->get_installed_state() );
+		}
+
 		return $data;
 	}
 

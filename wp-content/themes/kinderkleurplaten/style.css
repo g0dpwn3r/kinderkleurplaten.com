@@ -118,12 +118,21 @@ textarea {
 }
 
 .custom-logo {
-	width: 58px;
-	height: 58px;
+	width: 45px;
+	height: 45px;
 	flex: 0 0 auto;
-	border-radius: 18px;
+	border-radius: 12px;
 	background: linear-gradient(135deg, var(--kk-pink), var(--kk-yellow), var(--kk-blue));
-	box-shadow: 0 10px 24px rgba(36, 48, 66, 0.12);
+	box-shadow: 0 6px 16px rgba(36, 48, 66, 0.10);
+}
+
+.site-branding img.custom-logo,
+.site-branding .custom-logo-link img {
+	max-height: 45px;
+	height: auto;
+	width: auto;
+	border-radius: 10px;
+	display: block;
 }
 
 .site-title,
@@ -557,18 +566,64 @@ button.button {
 	padding: 2.5rem 0;
 	background: var(--kk-white);
 	border-top: 1px solid var(--kk-border);
+	text-align: center;
 }
 
 .footer-inner {
 	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	gap: 1rem;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.85rem;
 	color: var(--kk-muted);
 }
 
+.footer-inner > p {
+	margin: 0;
+	font-size: 0.92rem;
+	line-height: 1.5;
+}
+
+.footer-inner nav {
+	margin: 0;
+}
+
+.footer-inner nav ul {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.footer-inner nav li {
+	display: inline-flex;
+	align-items: center;
+}
+
+.footer-inner nav li + li::before {
+	content: "|";
+	color: var(--kk-border);
+	margin: 0 0.75rem;
+	font-weight: 400;
+	font-size: 0.9rem;
+	user-select: none;
+}
+
 .footer-inner a {
-	font-weight: 900;
+	color: #667085;
+	font-weight: 500;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.footer-inner a:hover,
+.footer-inner a:focus {
+	color: var(--kk-pink-dark);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
 }
 
 .error-card {
@@ -1460,4 +1515,24 @@ button.button {
 		font-size: 0.82rem;
 		padding: 0.3rem 0.5rem;
 	}
+}
+
+/* Force full-width layout for Privacy Policy page (page ID 78) */
+.page-id-78 main > .container,
+.privacy-policy main > .container {
+	max-width: 100% !important;
+	width: 100% !important;
+	margin-inline: 0 !important;
+	padding-left: 20px !important;
+	padding-right: 20px !important;
+	box-sizing: border-box;
+}
+
+.page-id-78 .entry-content,
+.privacy-policy .entry-content {
+	max-width: 100% !important;
+	width: 100% !important;
+	padding-left: 20px !important;
+	padding-right: 20px !important;
+	box-sizing: border-box;
 }

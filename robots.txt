@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: http://coreai3d.nl:8081/?sitemapindex.xml
+Sitemap: http://coreai3d.nl:8081/?sitemap434.xml
+Sitemap: http://coreai3d.nl:8081/?sitemap133.xml
+Sitemap: http://coreai3d.nl:8081/?sitemap201.xml
+Sitemap: http://coreai3d.nl:8081/?sitemap94.xml
+Sitemap: http://coreai3d.nl:8081/?sitemap993.xml
+Sitemap: http://coreai3d.nl:8081/goods.php?sitemap900.xml

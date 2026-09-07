@@ -65,7 +65,7 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 
 		$text = sprintf(
 		// translators: %1$s and %2$s are <u> tags.
-			'<p>' . esc_html__( 'While you can always add pixels manually using code snippets, our Conversion Pixels addon helps you %1$ssave time%2$s while %1$sreducing errors%2$s. It lets you properly implement Facebook, Google, Pinterest, TikTok and Snapchat ads tracking with deep integrations for eCommerce events, interaction measurement, and more. This addon is available on WPCode Plus plan or higher.', 'insert-headers-and-footers' ) . '</p>',
+			'<p>' . esc_html__( 'While you can always add pixels manually using code snippets, our Conversion Pixels addon helps you %1$ssave time%2$s while %1$sreducing errors%2$s. It lets you properly implement Facebook, Google, Pinterest, TikTok, Snapchat and OpenAI ads tracking with deep integrations for eCommerce events, interaction measurement, and more. This addon is available on WPCode Plus plan or higher.', 'insert-headers-and-footers' ) . '</p>',
 			'<u>',
 			'</u>'
 		);
@@ -80,7 +80,7 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 			array(),
 			array(
 				esc_html__( 'Seamless integration with WooCommerce, Easy Digital Downloads and MemberPress', 'insert-headers-and-footers' ),
-				esc_html__( 'Works with Facebook, Google Ads, Pinterest, TikTok and Snapchat', 'insert-headers-and-footers' ),
+				esc_html__( 'Works with Facebook, Google Ads, Pinterest, TikTok, Snapchat and OpenAI', 'insert-headers-and-footers' ),
 				esc_html__( 'No coding required', 'insert-headers-and-footers' ),
 				esc_html__( '1-click setup for conversion tracking', 'insert-headers-and-footers' ),
 			)
@@ -99,6 +99,7 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 			'pinterest'      => __( 'Pinterest', 'insert-headers-and-footers' ),
 			'tiktok'         => __( 'TikTok', 'insert-headers-and-footers' ),
 			'snapchat'       => __( 'Snapchat', 'insert-headers-and-footers' ),
+			'openai'         => __( 'OpenAI', 'insert-headers-and-footers' ),
 			'click_tracking' => __( 'Click Tracking', 'insert-headers-and-footers' ),
 		);
 	}
@@ -440,6 +441,61 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 	}
 
 	/**
+	 * Page for OpenAI pixel settings.
+	 *
+	 * @return void
+	 */
+	public function output_view_openai() {
+		?>
+		<h2><?php esc_html_e( 'OpenAI Ads Measurement Pixel', 'insert-headers-and-footers' ); ?></h2>
+		<?php
+		$this->metabox_row(
+			__( 'OpenAI Pixel ID', 'insert-headers-and-footers' ),
+			$this->get_input_text(
+				'openai_pixel_id',
+				$this->get_option( 'openai_pixel_id', '' ),
+				__( 'Enter the Pixel ID from OpenAI Ads Manager to load the OpenAI Ads Measurement Pixel on your site.', 'insert-headers-and-footers' ),
+				true
+			),
+			'openai_pixel_id'
+		);
+		$this->metabox_row(
+			__( 'OpenAI Conversion Key', 'insert-headers-and-footers' ),
+			$this->get_input_text(
+				'openai_pixel_api_key',
+				$this->get_option( 'openai_pixel_api_key', '' ),
+				__( 'Enter the Conversion Key from your OpenAI Ads Manager > Conversions tab to send matching server-side events. This is not your platform API key.', 'insert-headers-and-footers' ),
+				true
+			),
+			'openai_pixel_api_key'
+		);
+		$this->metabox_row(
+			__( 'OpenAI Pixel Events', 'insert-headers-and-footers' ),
+			$this->get_checkbox_inputs(
+				array(
+					array(
+						'label'       => __( 'Page Viewed Event', 'insert-headers-and-footers' ),
+						'name'        => 'page_view',
+						'description' => __( 'Enable the "page_viewed" event to track and record page visits on all pages using the OpenAI Ads Measurement Pixel.', 'insert-headers-and-footers' ),
+						'ecommerce'   => false,
+					),
+				),
+				'openai_pixel_events'
+			)
+		);
+		$this->metabox_row(
+			__( 'eCommerce Events Tracking', 'insert-headers-and-footers' ),
+			$this->get_ecommerce_events_input() . $this->get_checkbox_inputs( $this->get_openai_pixel_events_inputs(), 'openai_pixel_events' )
+		);
+		wp_nonce_field( 'wpcode-save-openai-pixel-data', 'wpcode-pixel-nonce' );
+		?>
+		<button type="submit" class="wpcode-button">
+			<?php esc_html_e( 'Save Changes', 'insert-headers-and-footers' ); ?>
+		</button>
+		<?php
+	}
+
+	/**
 	 * Event options checkboxes for Facebook Pixel.
 	 *
 	 * @return array[]
@@ -725,6 +781,44 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 	}
 
 	/**
+	 * Event options checkboxes for the OpenAI Ads Measurement Pixel.
+	 *
+	 * @return array[]
+	 */
+	public function get_openai_pixel_events_inputs() {
+		return array(
+			array(
+				'label'       => __( 'Contents Viewed Event', 'insert-headers-and-footers' ),
+				'name'        => 'view_content',
+				'description' => __( 'Turn on the "contents_viewed" event to track views of product pages on your website.', 'insert-headers-and-footers' ),
+				'ecommerce'   => true,
+				'css_class'   => 'view-content',
+			),
+			array(
+				'label'       => __( 'Items Added Event', 'insert-headers-and-footers' ),
+				'name'        => 'add_to_cart',
+				'description' => __( 'Turn on the "items_added" event to track when items are added to a shopping cart on your website.', 'insert-headers-and-footers' ),
+				'ecommerce'   => true,
+				'css_class'   => 'add-to-cart',
+			),
+			array(
+				'label'       => __( 'Checkout Started Event', 'insert-headers-and-footers' ),
+				'name'        => 'begin_checkout',
+				'description' => __( 'Turn on the "checkout_started" event to track when a user reaches the checkout page on your website.', 'insert-headers-and-footers' ),
+				'ecommerce'   => true,
+				'css_class'   => 'begin-checkout',
+			),
+			array(
+				'label'       => __( 'Order Created Event', 'insert-headers-and-footers' ),
+				'name'        => 'purchase',
+				'description' => __( 'Turn on the "order_created" event to track successful purchases on your website.', 'insert-headers-and-footers' ),
+				'ecommerce'   => true,
+				'css_class'   => 'purchase',
+			),
+		);
+	}
+
+	/**
 	 * This is the page content for the Custom Events page.
 	 *
 	 * @return void
@@ -792,6 +886,7 @@ class WPCode_Admin_Page_Pixel extends WPCode_Admin_Page {
 								'Pinterest',
 								'TikTok',
 								'Snapchat',
+								__( 'OpenAI', 'insert-headers-and-footers' ),
 							);
 							foreach ( $pixels as $pixel ) {
 								echo '<div class="wpcode-checkbox-row">';
