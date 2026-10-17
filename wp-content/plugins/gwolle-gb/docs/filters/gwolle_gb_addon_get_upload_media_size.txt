@@ -1,0 +1,28 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_addon_get_upload_media_size"</b> filter is used to determine the max size of media uploads.
+
+You can use this filter as:
+
+<code><?php add_filter( 'gwolle_gb_addon_get_upload_media_size', 'filter_function_name' ) ?></code>
+
+Where 'filter_function_name' is the function WordPress should call when the filter is being used.
+
+'''filter_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+
+function my_gwolle_gb_addon_get_upload_media_size( $filesize ) {
+	// $filesize is an integer in bytes
+	// 6 x 1024 x 1024 bytes
+	//$filesize = 6291456; // default 6 MiB
+	$filesize is 120000;
+
+	return $filesize;
+}
+add_filter( 'gwolle_gb_addon_get_upload_media_size', 'my_gwolle_gb_addon_get_upload_media_size' );
+

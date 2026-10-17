@@ -14,6 +14,7 @@ use Google\Site_Kit\Context;
 use Google\Site_Kit\Core\Assets\Assets;
 use Google\Site_Kit\Core\Authentication\Authentication;
 use Google\Site_Kit\Core\Dismissals\Dismissed_Items;
+use Google\Site_Kit\Core\Intents\Intents;
 use Google\Site_Kit\Core\Key_Metrics\Key_Metrics_Setup_Completed_By;
 use Google\Site_Kit\Core\Modules\Modules;
 use Google\Site_Kit\Core\Permissions\Permissions;
@@ -67,6 +68,14 @@ final class Screens {
 	private $authentication;
 
 	/**
+	 * Intents instance.
+	 *
+	 * @since 1.189.0
+	 * @var Intents
+	 */
+	private $intents;
+
+	/**
 	 * User_Options instance.
 	 *
 	 * @since 1.167.0
@@ -91,6 +100,7 @@ final class Screens {
 	 * @param Assets         $assets  Optional. Assets API instance. Default is a new instance.
 	 * @param Modules        $modules Optional. Modules instance. Default is a new instance.
 	 * @param Authentication $authentication  Optional. Authentication instance. Default is a new instance.
+	 * @param Intents        $intents  Optional. Intents instance. Default is a new instance.
 	 * @param User_Options   $user_options  Optional. User_Options instance. Default is a new instance.
 	 */
 	public function __construct(
@@ -98,12 +108,14 @@ final class Screens {
 		?Assets $assets = null,
 		?Modules $modules = null,
 		?Authentication $authentication = null,
+		?Intents $intents = null,
 		?User_Options $user_options = null
 	) {
 		$this->context        = $context;
 		$this->assets         = $assets ?: new Assets( $this->context );
 		$this->modules        = $modules ?: new Modules( $this->context );
 		$this->authentication = $authentication ?: new Authentication( $this->context );
+		$this->intents        = $intents ?: new Intents();
 		$this->user_options   = $user_options ?: new User_Options( $this->context );
 	}
 
@@ -385,6 +397,92 @@ final class Screens {
 	}
 
 	/**
+	 * Redirects dashboard to provide a site purpose answer.
+	 *
+	 * @since 1.183.0
+	 */
+	private function no_site_purpose_answer_redirect_dashboard_to_setup() {
+		wp_safe_redirect(
+			$this->context->admin_url(
+				'key-metrics-setup',
+				array(
+					'showProgress' => 'true',
+				)
+			)
+		);
+
+		exit;
+	}
+
+	/**
+	 * Redirects dashboard to complete analytics setup.
+	 *
+	 * @since 1.183.0
+	 */
+	private function analytics_setup_incomplete_redirect_dashboard_to_setup() {
+		$slug          = $this->context->input()->filter( INPUT_GET, 'slug' );
+		$show_progress = $this->context->input()->filter( INPUT_GET, 'showProgress', FILTER_VALIDATE_BOOLEAN );
+		$re_auth       = $this->context->input()->filter( INPUT_GET, 'reAuth', FILTER_VALIDATE_BOOLEAN );
+
+		if ( 'analytics-4' === $slug && $re_auth && $show_progress ) {
+			return;
+		}
+
+		$is_analytics_connected = $this->modules->is_module_connected( 'analytics-4' );
+
+		if ( $is_analytics_connected ) {
+			$this->no_site_purpose_answer_redirect_dashboard_to_setup();
+		}
+
+		wp_safe_redirect(
+			$this->context->admin_url(
+				'dashboard',
+				array(
+					'slug'         => 'analytics-4',
+					'showProgress' => 'true',
+					'reAuth'       => 'true',
+				)
+			)
+		);
+
+		exit;
+	}
+
+	/**
+	 * Gets the intent slug and code to render on the main dashboard.
+	 *
+	 * Both are empty unless the request names an intent that is registered and available and the
+	 * current user may set up Site Kit.
+	 *
+	 * @since 1.189.0
+	 *
+	 * @param Context $context Plugin context.
+	 * @return string[] Intent slug from the `intent` argument under `slug`, and one-time code from
+	 *                  the `intent_code` argument under `code`.
+	 */
+	private function get_intent_attributes( Context $context ) {
+		$intent = $context->input()->filter( INPUT_GET, 'intent' ) ?: '';
+		$code   = $context->input()->filter( INPUT_GET, 'intent_code' ) ?: '';
+
+		if (
+			! $intent
+			|| ! $code
+			|| ! current_user_can( Permissions::SETUP )
+			|| null === $this->intents->get_intent( $intent )
+		) {
+			return array(
+				'slug' => '',
+				'code' => '',
+			);
+		}
+
+		return array(
+			'slug' => $intent,
+			'code' => $code,
+		);
+	}
+
+	/**
 	 * Gets available admin screens.
 	 *
 	 * @since 1.0.0
@@ -407,7 +505,7 @@ final class Screens {
 							$assets->enqueue_asset( 'googlesitekit-main-dashboard' );
 						}
 					},
-					'initialize_callback' => function ( Context $context ) {
+					'initialize_callback' => function () {
 						if ( ! Feature_Flags::enabled( 'setupFlowRefresh' ) ) {
 							return;
 						}
@@ -416,44 +514,17 @@ final class Screens {
 
 						if ( ! $is_view_only ) {
 							$initial_setup_settings      = ( new Initial_Setup_Settings( $this->user_options ) )->get();
-							$is_analytics_setup_complete = $initial_setup_settings['isAnalyticsSetupComplete'];
+							$is_analytics_setup_complete = $initial_setup_settings['isAnalyticsSetupComplete'] ?? null;
+							$has_site_purpose_answer     = $initial_setup_settings['hasSitePurposeAnswer'] ?? null;
 
 							if ( false === $is_analytics_setup_complete ) {
-								$slug = $context->input()->filter( INPUT_GET, 'slug' );
-								$show_progress = $context->input()->filter( INPUT_GET, 'showProgress', FILTER_VALIDATE_BOOLEAN );
-								$re_auth = $context->input()->filter( INPUT_GET, 'reAuth', FILTER_VALIDATE_BOOLEAN );
+								$this->analytics_setup_incomplete_redirect_dashboard_to_setup();
+								return;
+							}
 
-								if ( 'analytics-4' === $slug && $re_auth && $show_progress ) {
-									return;
-								}
-
-								$is_analytics_connected = $this->modules->is_module_connected( 'analytics-4' );
-
-								if ( $is_analytics_connected ) {
-									wp_safe_redirect(
-										$context->admin_url(
-											'key-metrics-setup',
-											array(
-												'showProgress' => 'true',
-											)
-										)
-									);
-
-									exit;
-								} else {
-									wp_safe_redirect(
-										$context->admin_url(
-											'dashboard',
-											array(
-												'slug'   => 'analytics-4',
-												'showProgress' => 'true',
-												'reAuth' => 'true',
-											)
-										)
-									);
-
-									exit;
-								}
+							if ( false === $has_site_purpose_answer ) {
+								$this->no_site_purpose_answer_redirect_dashboard_to_setup();
+								return;
 							}
 						}
 					},
@@ -484,8 +555,10 @@ final class Screens {
 									wp_die( sprintf( '<span class="googlesitekit-notice">%s</span>', esc_html( $message ) ), 403 );
 								}
 							}
+
+							$intent_attributes = $this->get_intent_attributes( $context );
 							?>
-							<div id="js-googlesitekit-main-dashboard" data-view-only="<?php echo esc_attr( $is_view_only ); ?>" data-setup-module-slug="<?php echo esc_attr( $setup_module_slug ); ?>" class="googlesitekit-page"></div>
+							<div id="js-googlesitekit-main-dashboard" data-view-only="<?php echo esc_attr( $is_view_only ); ?>" data-setup-module-slug="<?php echo esc_attr( $setup_module_slug ); ?>" data-intent-slug="<?php echo esc_attr( $intent_attributes['slug'] ); ?>" data-intent-code="<?php echo esc_attr( $intent_attributes['code'] ); ?>" class="googlesitekit-page"></div>
 							<?php
 						}
 					},
@@ -557,6 +630,36 @@ final class Screens {
 				)
 			),
 		);
+
+		if ( Feature_Flags::enabled( 'featureDiscoveryHub' ) ) {
+			array_splice(
+				$screens,
+				2,
+				0,
+				array(
+					new Screen(
+						self::PREFIX . 'features',
+						array(
+							'title'            => __( 'Add Features', 'google-site-kit' ),
+							'menu_title'       => sprintf(
+								/* translators: %s: New features count badge. */
+								__( 'Add Features %s', 'google-site-kit' ),
+								'<span class="menu-counter googlesitekit-features-badge count-0"><span aria-hidden="true" class="count"></span><span class="screen-reader-text"></span></span>'
+							),
+							'capability'       => Permissions::MANAGE_OPTIONS,
+							'enqueue_callback' => function ( Assets $assets ) {
+								$assets->enqueue_asset( 'googlesitekit-features' );
+							},
+							'render_callback'  => function () {
+								?>
+								<div id="js-googlesitekit-features" class="googlesitekit-page"></div>
+								<?php
+							},
+						)
+					),
+				)
+			);
+		}
 
 		$screens[] = new Screen(
 			self::PREFIX . 'user-input',

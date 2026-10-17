@@ -1,0 +1,150 @@
+
+=== Changelog of Gwolle Guestbook: The Add-On  v1.0.0 - v1.5.1 ===
+
+= 1.5.1 =
+* 2019-11-11
+* Fix bug for string replacement in messages in the form.
+* Add function gwolle_gb_entry_social_media_service.
+* Refactor social media link without JavaScript.
+* Drop usage of 'create_function', PHP 5.2 is not supported anyway.
+* Show message on editor if there are no meta fields yet.
+
+= 1.5.0 =
+* 2019-09-25
+* Edit content of entry on the frontend with AJAX.
+* Small updates to install routine.
+* Support new wp_initialize_site action for multisite.
+* Better testing for values of meta fields.
+* Add rel="noopener noreferrer" to social media sharing.
+* Add Telegram for social media sharing.
+
+= 1.4.0 =
+* 2019-05-03
+* Add blacklist for words and IP address.
+* Update social media sharing for better accessibility.
+* Update rateit.js to 1.1.2 for better accessibility.
+* Improve handling of return values for meta fields.
+* Improve test for admin_reply in metabox.
+* Update Required version of Gwolle Guestbook to 3.1.4 for blacklist to work.
+
+= 1.3.2 =
+* 2019-03-16
+* Add Reddit for social media sharing.
+* Fix Facebook URL for social media sharing.
+
+= 1.3.1 =
+* 2019-03-08
+* Remove Google Plus for social media sharing.
+* Use filter gwolle_gb_get_permalink for permalinks.
+* Small improvements to html formatting.
+* Small fixes found by the phan tool.
+* On adding admin reply through frontend, always show full content.
+
+= 1.3.0 =
+* 2019-01-22
+* Add option to enable/disable Preview.
+* Show meta fields for preview as well.
+* Fix resetting of social media location.
+* On settings page, have separate function for $_POST update.
+* Switch database table to utf8mb4 when possible.
+* Add some accessibility fixes.
+* Update Required version of Gwolle Guestbook to 2.5.4.
+
+= 1.2.4 =
+* 2018-12-09
+* Fix resetting of starrating location.
+* Don't run upgrade every admin load.
+
+= 1.2.3 =
+* 2018-11-08
+* Revert previous jQuery bugfix (incompatible with IE 11).
+
+= 1.2.2 =
+* 2018-10-30
+* Send author email when admin reply was added through frontend.
+* Use jQuery to get data from input fields in form for preview.
+* Add reporter ip address to abuse report email.
+* Fix PHP warning.
+
+= 1.2.1 =
+* 2018-07-09
+* Add rating to widget.
+* Add Auto Anonymize timer (optional).
+* Add example text to the privacy policy.
+* Add meta fields to notification mails (needs Gwolle 2.6.1).
+* Fix preview when AJAX is disabled.
+
+= 1.2.0 =
+* 2018-06-11
+* Add function for abuse report.
+* Fix JavaScript error when rating is not used.
+* Return meta_id on updating meta field in 'gwolle_gb_addon_save_meta'.
+* Fix preview with Gwolle 2.6.0.
+
+= 1.1.2 =
+* 2018-04-25
+* Add complete form to string replacement.
+* Use 'wp_kses_post' function to sanitize string replacements.
+
+= 1.1.1 =
+* 2018-04-13
+* Add Auto Delete timer (optional).
+* Add hook for uninstall.
+* Set default settings upon install/upgrade, so we can cache them.
+* Don't fetch meta_values from the db that we know do not exist.
+
+= 1.1.0 =
+* 2018-03-25
+* Delete meta fields on permanently deleting an entry (needs Gwolle > 2.4.0).
+* Add support for sitemap for Yoast SEO.
+* Add support for sitemap for All In One SEO Pack.
+* Add support for sitemap for The SEO Framework.
+* Add support for sitemap for Google Sitemap Generator.
+* Add support for sitemap for XML Sitemap Feed.
+* Function gwolle_gb_addon_get_meta can really return an array.
+* Use gwolle_gb_sanitize_input and gwolle_gb_sanitize_output for meta_value.
+* Rephrase Cheating messages like WP Core.
+
+= 1.0.7 =
+* 2018-02-10
+* Add option for display location for social media.
+* Add option for display location for starrating.
+* Fix email encoding for PHP 7.2.
+* Remove filter for email regex.
+
+= 1.0.6 =
+* 2018-01-06
+* Encode email addresses at frontend.
+
+= 1.0.5 =
+* 2017-11-29
+* Add email button to contact each author (optional).
+* Add widget for average star rating per guestbook.
+
+= 1.0.4 =
+* 2017-11-06
+* Separate option for delete link for moderators and author.
+* Add link to support forum for ideas.
+* Show text when there are no meta fields yet.
+* Localize admin JavaScript.
+* Update readme with more instructions.
+
+= 1.0.3 =
+* 2017-10-19
+* Update readme with installation instructions.
+* Add filter 'gwolle_gb_addon_social_media'.
+* Improve docblocks.
+
+= 1.0.2 =
+* 2017-10-03
+* Really load Gwolle JS on every page for callbacks and rating (add priority).
+
+= 1.0.1 =
+* 2017-09-15
+* Add cancel button for AJAX admin reply.
+* Load Gwolle JS on every page for callbacks and rating.
+
+= 1.0.0 =
+* 2017-08-28
+* Initial release
+

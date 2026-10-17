@@ -1,0 +1,33 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_addon_social_media"</b> filter is used to add or remove social media from the list of options for sharing.
+
+You can use this filter as:
+
+<code><?php add_filter( 'gwolle_gb_addon_social_media', 'filter_function_name' ) ?></code>
+
+Where 'filter_function_name' is the function WordPress should call when the filter is being used.
+
+'''filter_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+
+function my_gwolle_gb_addon_social_media( $list ) {
+	
+	$list['my_medium'] = array(
+		'name'  => 'My Medium',
+		'icon'  => GWOLLE_GB_URL . 'assets/social-icons/my_medium.png',
+		'url'   => 'https://www.my_medium.com/sharer.php?u=',
+		'check' => 'true',
+		'order' => 0,
+	);
+
+	return $list;
+
+}
+add_filter( 'gwolle_gb_addon_social_media', 'my_gwolle_gb_addon_social_media' );
+

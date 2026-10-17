@@ -1,0 +1,282 @@
+
+== Changelog of Gwolle Guestbook Version 4.0.0 - 4.10.1 ==
+
+= 4.10.1 =
+* 2026-02-06
+* Remove dependency on jQuery on frontend.
+* Remove gwolle_gb_ajax_callback jQuery callback.
+* Escape key closes metabox.
+* Fix undefined variable in main widget.
+* Change a few class names.
+
+= 4.10.0 =
+* 2025-12-23
+* Remove support for Cleantalk antispam service, merged in their plugin.
+  (since v6.68 released on 13.11.2025).
+* Rewrite most jQuery code into vanilla JavaScript.
+* Use CSS transition for main button of form.
+* Use CSS transition for metabox.
+* Use CSS transition for readmore links.
+* Use button to toggle metabox on frontend.
+* Improve blocklist.
+* Add function gwolle_gb_check_ip_on_blocklist().
+* Always show ajax icon in metabox, even if not logged in.
+* Change a few class names for gwolle-gb-messages.
+* Better sanitizing of settings.
+* Add function gwolle_gb_setting_array_sanitize.
+* Add function gwolle_gb_markitup_replace for backwards compatibility.
+* Use plugin_dir_path instead of WP_PLUGIN_DIR.
+* Verify Nonces correctly.
+* Remove upgrading old options that don't exist anymore.
+* Set autoload explicitly for options.
+* Reset character counter for textarea after submitting new entry.
+* Remove deprecated gwolle_gb_scroll_callback (as jQuery.Callbacks() ).
+* Cleanup old strings for Add-On.
+
+= 4.9.3 =
+* 2025-06-23
+* Fix security issue in BBcode (thanks zer0gh0st (D.Sim) through Wordfence).
+* Use esc_url and wp_kses on BBcode data through url and img.
+* Use preg_replace_callback for a callback function for sanitizing.
+* Add label to admin pages.
+* Add screen-reader-text to main admin pages.
+* Make log messages more consistent (thanks rhialto).
+
+= 4.9.2 =
+* 2025-06-08
+* Add #id again to entries in main shortcode.
+* Add link in widget to the corresponding entry.
+* Fix 'readmore' functionality (broke in 4.9.0).
+
+= 4.9.1 =
+* 2025-05-30
+* Add support for Cleantalk antispam service.
+* Fix missing s in settingspage for cleantalk (thanks alexclassroom).
+* Rewrite small part of jQuery JavaScript to Vanilla JavaScript.
+
+= 4.9.0 =
+* 2025-05-04
+* Deprecate 'gwolle_gb_ajax_callback' as jQuery.Callbacks.
+* Timing and loading order of JavaScript is impossible to manage.
+* Add JavaScript function 'gwolle_gb_frontend_callback_function'.
+
+= 4.8.1 =
+* 2025-03-26
+* Change default setting, disable Nonce spamfilter.
+* Add option to also send notification email with spam entries.
+* Fix heading and notice, show default when empty.
+
+= 4.8.0 =
+* 2025-02-18
+* Add option for Youtube to bbcode.
+* Add function gwolle_gb_bbcode_disabled.
+* Deprecate function gwolle_gb_bbcode_img_disabled.
+* Add filter gwolle_gb_bbcode_youtube_enabled.
+* Add function 'gwolle_gb_get_field_id()'.
+* Fix formfields to have an id attribute, for accessibility (thanks chris0815).
+* Add CSS for loginform to have text label above input field.
+* Take some hints from phpcs.
+* Update strings for Add-On.
+
+= 4.7.2 =
+* 2025-01-22
+* Fix XSS security issue (thanks Peter Thaleikis).
+* Allow html in author_name through filter.
+* Hide invisible elements for screenreaders.
+
+= 4.7.1 =
+* 2024-11-15
+* Better check for parameters in the shortcode.
+
+= 4.7.0 =
+* 2024-10-02
+* Always use utf8mb4 for database tables (requires MySQL 5.5 or higher).
+* Better check for direct access of files.
+* Remove return message about 'too fast', not needed really.
+* Add function and action 'gwolle_gb_enqueue' so people can choose whether to load css or not.
+* Add filter gwolle_gb_enqueue_frontend_css.
+* Add filter gwolle_gb_bbcode_img_enabled.
+* Add function gwolle_gb_bbcode_img_disabled.
+* Also parse (or strip) BBcode in notification mails.
+* Loading plugin translations should be delayed until init action.
+
+= 4.6.2 =
+* 2024-02-09
+* Add direct link to moderation email for quick checking of an entry (thanks Paul Bergers).
+* Add log entry entry-checked-by-email.
+* Fixes for function 'gwolle_gb_array_flatten()'.
+
+= 4.6.1 =
+* 2023-09-29
+* Make author email editable too.
+* Change max-height for images from 500px to 700px.
+* Add support for Litespeed Cache.
+* Fix saving meta key for book_id.
+
+= 4.6.0 =
+* 2023-05-17
+* Add parameter 'num_entries' to shortcode for more flexibility.
+* For excerpt, add a Collapse link as well (thanks slavum).
+* Fix double slash for sss.js enqueue.
+* Small additions to spamfilters.
+* Drop 'auto_detect_line_endings' for import, deprecated in PHP 8.1.
+* Add small advertisement for a recommended plugin (free).
+* Take more hints from phpcs.
+* Update strings for Add-On.
+
+= 4.5.0 =
+* 2023-01-24
+* Support print CSS.
+* Use 'wp_required_field_indicator' function from WordPress Core 6.1 if available.
+* Add filters 'gwolle_gb_entry_read_author_info_before' and 'gwolle_gb_entry_read_author_info_after'.
+* Update emoji.
+
+= 4.4.1 =
+* 2022-11-19
+* Quick fix for missing roles.
+
+= 4.4.0 =
+* 2022-11-18
+* Use custom capabilities 'gwolle_gb_moderate_comments' and 'gwolle_gb_upload_files'.
+* Refactor Admin Editor, saving new entry saves more options.
+
+= 4.3.0 =
+* 2022-09-01
+* Dependency for jquery should be an array.
+* Make sure setting for admin list is always shown correctly.
+* Move setting for antispam security question to antispam settings tab.
+* Set max-height for images as well.
+* Add class to form if user is logged in or not.
+* Add 'clear:both' to metabox lines.
+* Support Siteground Cache plugin for clearing cache.
+* Use html5 on all themes.
+* Add filter 'gwolle_gb_header_text'.
+* Add function 'widget_single_view()' to widget to avoid duplicate code.
+* Only use 'gwolle_gb_ajax_callback' for callbacks.
+* Update strings for add-on.
+
+= 4.2.2 =
+* 2022-03-16
+* Change options for number of words in widget to more reasonable options.
+* Add class 'gwolle-gb-ajax' to form and list if configured so it can be used more widely.
+* Add class as well to '#gwolle-gb-total'.
+* Remove '&raquo;' character from frontend.
+* Place "clearboth" divs inside div for form field, compatibility with zass theme.
+* Add filter 'gwolle_gb_formclass' for class of frontend form.
+* Add filter 'gwolle_gb_button_text' for simpler changing the button text.
+* Add function 'gwolle_gb_array_flatten()' and use it instead of 'print_r()'.
+* Always add nonce to the upload form, so we can use it if desired.
+* Remove old translation files from plugin, GlotPress should be used.
+
+= 4.2.1 =
+* 2021-12-09
+* Fix pagination, always use 'int', not the 'float' from 'ceil()'.
+* Fix editor checkboxes, use int, not string.
+
+= 4.2.0 =
+* 2021-11-18
+* Security fix for CSRF, use 'sanitize_text_field' for user_email on author search.
+* Thanks Erwan from wpscan.
+* Use more 'esc_attr' when appropriate.
+* Add option for character limit in content of entry.
+* Add function 'gwolle_gb_check_maxlength'.
+* Add function 'gwolle_gb_count_characters'.
+* Load markitup.js in footer.
+* Run update hook in 'init' instead of 'admin_init' to support background updates.
+* No need to check if function 'current_user_can', 'user_can', 'is_multisite' and 'has_shortcode' exist.
+* Drop support for WP 3.4 and using 'get_current_theme'.
+* Some updates from phpcs and wpcs.
+
+= 4.1.2 =
+* 2021-05-05
+* Add more classes to text elements, for better customization.
+* Better explain how to add a new user to notifications.
+* Fix PHP error when addon is set as active but not available in plugins folder.
+
+= 4.1.1 =
+* 2021-03-01
+* Fix deprecated jQuery calls with WP 5.6 and jQuery 3.5.
+* Fix form submission when using http on a https website or viceversa.
+
+= 4.1.0 =
+* 2021-01-27
+* Add notification email on moderation.
+* Support WP Rocket for clearing cache.
+* Add span around "from" text in frontend.
+* Add "required" parameter to search widget.
+* Better test for empty string of email subscribers.
+* Change 'intval()' to '(int)'.
+* Change 'strval()' to '(string)'.
+
+= 4.0.8 =
+* 2020-10-21
+* Security fix: always escape formdata in 'gwolle_gb_add_formdata()'.
+* Thanks [Nicolas SURRIBAS](http://devloop.users.sourceforge.net/index.php?article217/one-crazy-month-of-web-vulnerability-scanning).
+
+= 4.0.7 =
+* 2020-10-06
+* Remove placeholders in form, labels should be enough.
+* Fix closing/opening of postboxes.
+* Check for double entries is now a filter, so that it can be disabled.
+
+= 4.0.6 =
+* 2020-08-10
+* Fix blocklist.
+
+= 4.0.5 =
+* 2020-07-21
+* Add blocklist (taken from add-on).
+* Also use blocklist from WordPress Core.
+* Fix datetime in RSS to be RFC 822 compliant.
+* Add support for user ID in import (based on email address).
+* Support editing of author ID in Editor.
+* Add class 'gwolle-gb-widget' to widget 'ul' element.
+* Fix saving certain settings on some hosts.
+* Update strings for add-on.
+
+= 4.0.4 =
+* 2020-06-21
+* Fix svn issue.
+
+= 4.0.3 =
+* 2020-06-21
+* Remove ':' from form labels.
+* Remove part of the label for anti-spam question.
+* Fix class of messages on error (red/green).
+* Fixed a few actions for 'gwolle_gb_save_entry_admin'.
+* Remove 'gwolle_gb_antispam_label' filter.
+* Metabox opens now with a softer fade effect.
+* Use standard From addres 'wordpress@domain.com' as default.
+* Add function 'gwolle_gb_get_user_ip()' for CDN or proxy.
+* Add filter 'gwolle_gb_include_proxy_ips' for using this with a CDN or proxy.
+* Fix bugs in book_id functions.
+
+= 4.0.2 =
+* 2020-05-15
+* Redo dismiss button for form in CSS.
+* Improve CSS for dark themes.
+* Set error for select element on 'div.input'.
+* Add postbox on main admin page when add-on is active.
+* Update strings for add-on.
+
+= 4.0.1 =
+* 2020-05-04
+* Fix emoji in frontend form.
+* Set timestamp in editor to hidden again.
+* Make some CSS more specific.
+
+= 4.0.0 =
+* 2020-04-28
+* Many CSS ids and classes have changed, please review your custom CSS.
+* Plugin supports multiple forms on one page now.
+* Fix serialized options.
+* Add pause on hover for super-simple-slider.
+* Fix updating of datetime on admin editor.
+* Fix double class attributes in form.
+* Run timeout function only once, set timout to 1 second.
+* Remove separators from BBcode icons.
+* Add loading="lazy" attribute to bbcode images.
+* Add filters 'gwolle_gb_author_origin_prefill', 'gwolle_gb_author_content_prefill' and 'gwolle_gb_author_content_label'.
+* Deprecate 'gwolle_gb_content_label' filter.
+* Update strings for add-on.
+

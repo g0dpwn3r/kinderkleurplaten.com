@@ -1,0 +1,27 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_bbcode_img_enabled"</b> filter is used to decide if images are enabled in the BBcode of the editor.
+
+You can use this filter as:
+
+<code><?php add_filter( 'gwolle_gb_bbcode_img_enabled', 'filter_function_name' ) ?></code>
+
+Where 'filter_function_name' is the function WordPress should call when the filter is being used.
+
+'''filter_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+
+function my_gwolle_gb_bbcode_img_enabled( $enabled ) {
+	// $enabled is a boolean
+	//$enabled = true; // default
+	$enabled = false;
+
+	return $enabled;
+}
+add_filter( 'gwolle_gb_bbcode_img_enabled', 'my_gwolle_gb_bbcode_img_enabled' );
+

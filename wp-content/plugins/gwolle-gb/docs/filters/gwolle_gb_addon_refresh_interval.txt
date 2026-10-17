@@ -1,0 +1,28 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_addon_refresh_interval"</b> filter is used to determine how
+often the list of entries is refreshed in seconds.
+
+You can use this filter as:
+
+<code><?php add_filter( 'gwolle_gb_addon_refresh_interval', 'filter_function_name' ) ?></code>
+
+Where 'filter_function_name' is the function WordPress should call when the filter is being used.
+
+'''filter_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+
+function my_gwolle_gb_addon_refresh_interval( $refresh ) {
+	// $refresh is an integer in seconds
+	//$refresh = 180000; // default
+	$refresh is 120000;
+
+	return $refresh;
+}
+add_filter( 'gwolle_gb_addon_refresh_interval', 'my_gwolle_gb_addon_refresh_interval' );
+

@@ -1,8 +1,5 @@
-/**
- * Styles for the edit snippet admin page.
- */
-
-@use 'common/direction';
+@use 'common/buttons';
+@use 'common/theme';
 @use 'common/codemirror';
 @use 'common/badges';
 @use 'common/switch';
@@ -10,13 +7,18 @@
 @use 'common/tooltips';
 @use 'common/modal';
 @use 'common/upsell';
+@use 'common/toolbar';
+@use 'common/wp-admin';
+@use 'common/page-header';
+@use 'common/list-table';
 @use 'edit/form';
 @use 'edit/sidebar';
 @use 'edit/editor';
+@use 'edit/notices';
 @use 'edit/conditions';
 @use 'edit/gpt';
 
-.notice.error blockquote {
+.banner.error blockquote {
 	margin-block-end: 0;
 }
 
@@ -27,7 +29,21 @@
 	margin: 0;
 }
 
+#adminmenu a.code-snippets-edit-menu-link {
+	cursor: pointer;
+}
+
+#edit-snippet-container {
+	margin-block-start: 0;
+}
+
 .snippet-description-container {
+	label {
+		font-size: 1.16em;
+		font-weight: 600;
+		text-transform: unset;
+	}
+
 	.wp-editor-tools {
 		padding-block-start: 5px;
 	}
@@ -37,25 +53,21 @@
 	}
 
 	.generate-button {
-		float: inline-end;
-		margin-block-start: 37px;
 		z-index: 99;
 		position: relative;
 	}
 }
 
-.components-form-token-field__input-container {
-	background: #fff;
-	border-color: #c3c4c7;
+.snippet-tags-container {
+	.components-form-token-field__input-container {
+		background: var(--cs-color-surface);
+		border-color: var(--cs-color-border);
+		border-radius: 5px;
 
-	> .components-flex {
-		padding: 12px;
+		> .components-flex {
+			padding: 12px;
+		}
 	}
-}
-
-#titlediv,
-.snippet-type-container {
-	margin-block-end: 24px;
 }
 
 .above-snippet-code {
@@ -65,15 +77,16 @@
 	margin-inline: 0;
 	gap: 8px;
 
-	h2 {
-		margin: 0;
+	label {
+		font-size: 1.16em;
+		font-weight: 600;
 	}
 
 	.expand-editor-button {
 		display: flex;
-		gap: 5px;
 		align-items: center;
 		margin-inline-end: auto;
+		gap: 5px;
 
 		.dashicons {
 			inline-size: 18px;
@@ -94,14 +107,4 @@
 
 form.condition-snippet .snippet-code-container {
 	display: none;
-}
-
-.cs-back {
-	cursor: pointer;
-
-	&::before {
-		content: '<';
-		color: #2271b1;
-		margin-inline-end: 3px;
-	}
 }

@@ -28,6 +28,7 @@ use Google\Site_Kit\Core\Modules\Modules;
 use Google\Site_Kit\Core\Util\BC_Functions;
 use Google\Site_Kit\Core\Util\URL;
 use Google\Site_Kit\Core\Util\Auto_Updates;
+use Google\Site_Kit\Core\Util\Plugin_Update;
 use Google\Site_Kit\Core\Authentication\REST_Authentication_Controller;
 use Google\Site_Kit\Core\Tracking\Feature_Metrics_Trait;
 use Google\Site_Kit\Core\Tracking\Provides_Feature_Metrics;
@@ -74,7 +75,7 @@ final class Authentication implements Provides_Feature_Metrics {
 	private $user_options = null;
 
 	/**
-	 * User_Input
+	 * User_Input.
 	 *
 	 * @since 1.90.0
 	 *
@@ -349,6 +350,10 @@ final class Authentication implements Provides_Feature_Metrics {
 
 		add_action( 'update_option_blogname', $option_updated );
 		add_action( 'update_option_googlesitekit_db_version', $option_updated );
+		// WordPress fires `add_option_` the first time an option is saved and `update_option_` after
+		// that. Both are needed, otherwise the first release that saves the version would not sync.
+		add_action( 'add_option_' . Plugin_Update::VERSION_OPTION, $option_updated );
+		add_action( 'update_option_' . Plugin_Update::VERSION_OPTION, $option_updated );
 
 		add_action(
 			OAuth_Client::CRON_REFRESH_PROFILE_DATA,
@@ -998,7 +1003,7 @@ final class Authentication implements Provides_Feature_Metrics {
 	}
 
 	/**
-	 * Add allowed redirect host to safe wp_safe_redirect
+	 * Add allowed redirect host to safe wp_safe_redirect.
 	 *
 	 * @since 1.0.0
 	 *
@@ -1079,7 +1084,11 @@ final class Authentication implements Provides_Feature_Metrics {
 
 					// Only show the comparison if URLs don't match as it is possible
 					// they could already match again at this point, although they most likely won't.
-					if ( ! $this->connected_proxy_url->matches_url( $current_url ) ) {
+					// A stored value the plugin can't decode reads as no URL.
+					// Ensure the currently-connected URL isn't empty;
+					// if it is, we shouldn't output the old/new URLs, because the
+					// old URL will be blank.
+					if ( ! empty( $connected_url ) && ! $this->connected_proxy_url->matches_url( $current_url ) ) {
 						$content .= sprintf(
 							'<ul><li>%s</li><li>%s</li></ul>',
 							sprintf(
@@ -1133,7 +1142,7 @@ final class Authentication implements Provides_Feature_Metrics {
 						?>
 						<a
 							href="#"
-							onclick="reauthenticateAndContinueSetup()"
+							onclick="event.preventDefault(); reauthenticateAndContinueSetup();"
 						><?php esc_html_e( 'Click here', 'google-site-kit' ); ?></a>
 					</p>
 					<?php
@@ -1141,11 +1150,32 @@ final class Authentication implements Provides_Feature_Metrics {
 						sprintf(
 							"
 							function reauthenticateAndContinueSetup() {
-								const moduleSlug = getAbandonedModuleSlug();
+								const moduleSetup = getAbandonedModuleSetup();
 
-								if ( moduleSlug ) {
-									const redirect = '%3\$s&slug=' + moduleSlug;
-									document.location = '%2\$s&redirect=' + encodeURIComponent( redirect );
+								if ( moduleSetup?.slug ) {
+									const {
+										additionalScopes = [],
+										redirectQueryArgs = {},
+									} = moduleSetup.options || {};
+
+									const redirect = new URL( '%3\$s' );
+									redirect.searchParams.set( 'slug', moduleSetup.slug );
+									Object.entries( redirectQueryArgs ).forEach( ( [ key, value ] ) =>
+										redirect.searchParams.set( key, value )
+									);
+
+									const connect = new URL( '%2\$s' );
+									connect.searchParams.set( 'redirect', redirect.toString() );
+									// Rewrite the scheme as getConnectURL does, to avoid host security
+									// filters that block query parameters beginning with a URL.
+									additionalScopes.forEach( ( scope ) =>
+										connect.searchParams.append(
+											'additional_scopes[]',
+											scope.replace( /^http(s)?:/, 'gttp\$1:' )
+										)
+									);
+
+									document.location = connect.toString();
 								} else {
 									if ( localStorage ) {
 										localStorage.clear();
@@ -1157,7 +1187,7 @@ final class Authentication implements Provides_Feature_Metrics {
 								}
 							}
 
-							function getAbandonedModuleSlug() {
+							function getAbandonedModuleSetup() {
 								for ( const storage of [ localStorage, sessionStorage ] ) {
 									if ( ! storage ) {
 										continue;

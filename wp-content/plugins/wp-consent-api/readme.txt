@@ -4,9 +4,9 @@ Tags: consent, privacy, cookies, api, compliance
 Requires at least: 5.0
 License: GPL2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.1.0
 
 Simple Consent API to read and register the current consent category.
 
@@ -52,6 +52,60 @@ A plugin can use a hook to listen for changes or check the value of a given cate
 
 Categories and most other stuff can be extended with a filter.
 
+= Service-level consent =
+In addition to category-based consent, the API supports service-level consent control. This allows consent management plugins to grant or deny consent for specific services (like 'google-analytics' or 'facebook-pixel') independently from their category. When checking service consent with wp_has_service_consent(), the API first checks if explicit consent exists for that service. If no explicit consent is set, it falls back to the consent status of the service's category. This enables fine-grained control: a user might accept statistics cookies in general, but explicitly deny a specific analytics service.
+
+Service consent can be checked and set both server-side (PHP) and client-side (JavaScript):
+
+PHP:
+`
+//check if a specific service has consent
+if ( wp_has_service_consent( 'google-analytics' ) ) {
+    //activate google analytics
+}
+
+//check if a service is explicitly denied
+if ( wp_is_service_denied( 'facebook-pixel' ) ) {
+    //service was explicitly denied by user
+}
+
+//set service consent
+wp_set_service_consent( 'google-analytics', true ); //grant consent
+wp_set_service_consent( 'facebook-pixel', false ); //deny consent
+
+//listen for service consent changes
+add_action( 'wp_consent_service_changed', function( $service, $consented ) {
+    error_log( "Service {$service} consent changed to: " . ( $consented ? 'granted' : 'denied' ) );
+}, 10, 2 );
+`
+
+JavaScript:
+`
+//check service consent
+if ( wp_has_service_consent( 'youtube' ) ) {
+    //activate tracking
+}
+`
+
+//check if explicitly denied
+`
+if ( wp_is_service_denied( 'facebook-pixel' ) ) {
+    //service denied
+}
+`
+
+//set service consent
+`
+wp_set_service_consent( 'youtube', true );
+`
+
+//listen for service consent changes
+`
+document.addEventListener( 'wp_consent_api_status_change_service', function( e ) {
+    console.log( 'Service: ' + e.detail.service + ', consented: ' + e.detail.value );
+});
+`
+
 ## Existing integrations
 Categorized, and sorted alphabetically
 
@@ -62,6 +116,7 @@ Categorized, and sorted alphabetically
 - [Abconsent Sirdata CMP](https://wordpress.org/plugins/sirdata-cmp/).
 - [Beautiful Cookie Consent Banner](https://wordpress.org/plugins/beautiful-and-responsive-cookie-consent/).
 - [Clickio Consent](https://wordpress.org/plugins/clickio-consent/)
+- [Cookie Consent CMP](https://github.com/szepeviktor/cookie-consent-cmp-for-wordpress).
 - [Complianz GDPR/CCPA](https://wordpress.org/plugins/complianz-gdpr/).
 - [Consent Studio](https://consent.studio/).
 - [consentmanager](https://wordpress.org/plugins/consent-manager/).
@@ -75,6 +130,7 @@ Categorized, and sorted alphabetically
 - [GDPR Cookie Consent Plugin - CCPA Ready](https://www.webtoffee.com/product/gdpr-cookie-consent/).
 - [GetTerms](https://getterms.io/consent-manager/).
 - [iubenda | All-in-one Compliance](https://wordpress.org/plugins/iubenda-cookie-law-solution/).
+- [Lawwwing](https://wordpress.org/plugins/ibamu/).
 - [Pressidium Cookie Consent](https://wordpress.org/plugins/pressidium-cookie-consent/).
 - [TrustArc Cookie Consent Manager](https://wordpress.org/plugins/trustarc-cookie-consent-manager/)
 
@@ -102,7 +158,6 @@ window.wp_consent_type = 'optin'
 //dispatch event when consent type is defined. This is useful if the region is detected server side, so the consent type is defined later during the pageload
 let event = new CustomEvent('wp_consent_type_defined');
 document.dispatchEvent( event );
-
 
 //consent management plugin sets cookie when consent category value changes
 wp_set_consent('marketing', 'allow');
@@ -152,56 +207,6 @@ if (wp_has_consent('marketing')){
 //do marketing stuff
 }
 `
-
-
-= Service-level consent =
-In addition to category-based consent, the API supports service-level consent control. This allows consent management plugins to grant or deny consent for specific services (like 'google-analytics' or 'facebook-pixel') independently from their category. When checking service consent with wp_has_service_consent(), the API first checks if explicit consent exists for that service. If no explicit consent is set, it falls back to the consent status of the service's category. This enables fine-grained control: a user might accept statistics cookies in general, but explicitly deny a specific analytics service.
-
-Service consent can be checked and set both server-side (PHP) and client-side (JavaScript):
-
-PHP:
-`
-//check if a specific service has consent
-if ( wp_has_service_consent( 'google-analytics' ) ) {
-    //activate google analytics
-}
-
-//check if a service is explicitly denied
-if ( wp_is_service_denied( 'facebook-pixel' ) ) {
-    //service was explicitly denied by user
-}
-
-//set service consent
-wp_set_service_consent( 'google-analytics', true ); //grant consent
-wp_set_service_consent( 'facebook-pixel', false ); //deny consent
-
-//listen for service consent changes
-add_action( 'wp_consent_service_changed', function( $service, $consented ) {
-    error_log( "Service {$service} consent changed to: " . ( $consented ? 'granted' : 'denied' ) );
-}, 10, 2 );
-`
-
-JavaScript:
-`
-//check service consent
-if ( wp_has_service_consent( 'youtube' ) ) {
-    //activate tracking
-}
-
-//check if explicitly denied
-if ( wp_is_service_denied( 'facebook-pixel' ) ) {
-    //service denied
-}
-
-//set service consent
-wp_set_service_consent( 'youtube', true );
-
-//listen for service consent changes
-document.addEventListener( 'wp_consent_api_status_change_service', function( e ) {
-    console.log( 'Service: ' + e.detail.service + ', consented: ' + e.detail.value );
-});
-`
-
 Any code suggestions? We're on [GitHub](https://github.com/WordPress/wp-consent-level-api) as well!
 
 == Installation ==
@@ -242,6 +247,9 @@ Preferences:
 Cookies or any other form of local storage that can not be seen as statistics, statistics-anonymous, marketing or functional, and where the technical storage or access is necessary for the legitimate purpose of storing preferences.
 
 == Changelog ==
+= 2.1.0 =
+Change: internally unused wp_set_cookie() function dropped in favor of upcoming WordPress core wp_set_cookie() function.
+
 = 2.0.1 =
 Fix: typo in 'preferences' category, causing comment cookies functionality to follow functional category consent, props @sjinks
 

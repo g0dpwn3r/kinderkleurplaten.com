@@ -7,6 +7,7 @@ import time
 import requests
 import io
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from huggingface_hub import InferenceClient
@@ -25,16 +26,54 @@ try:
 except ImportError:
     _ENRICHMENT_AVAILABLE = False
 
-HUGGINGFACE_TOKEN = os.getenv("HF_TOKEN")
+# Support both HF_TOKEN and HUGGINGFACE_API_KEY for compatibility
+HUGGINGFACE_TOKEN = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_KEY")
 WP_URL = os.getenv("WORDPRESS_URL")
 WP_USERNAME = os.getenv("WORDPRESS_USERNAME")
 WP_APP_PASSWORD = os.getenv("WORDPRESS_APP_PASSWORD")
 
+def _validate_hf_token(token: str | None) -> str:
+    """Validate and return Hugging Face token, exit with clear error if missing/invalid."""
+    if not token:
+        print(
+            "FOUT: Hugging Face API token niet gevonden.\n"
+            "  Stel HF_TOKEN of HUGGINGFACE_API_KEY in via environment variable of .env bestand.\n"
+            "  Voorbeeld: export HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx\n"
+            "  Of voeg toe aan .env: HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx"
+        )
+        sys.exit(1)
+    if not token.startswith("hf_"):
+        print(
+            "WAARSCHUWING: Hugging Face token begint niet met 'hf_'. "
+            "Controleer of het token correct is gekopieerd."
+        )
+    return token
+
+# Validate token early
+HUGGINGFACE_TOKEN = _validate_hf_token(HUGGINGFACE_TOKEN)
+
 # Initialiseer de client voor tekstgeneratie (Llama 3.1)
 client = InferenceClient(api_key=HUGGINGFACE_TOKEN)
 
-# URL voor FLUX afbeeldingen
+# URL voor FLUX afbeeldingen (niet direct gebruikt, InferenceClient handelt dit af)
 IMAGE_API_URL = "https://router.huggingface.co/hf-inference/v1/models/black-forest-labs/FLUX.1-schnell"
+
+def _handle_hf_error(e: Exception, context: str) -> None:
+    """Handle Hugging Face API errors with clear messaging for 401/unauthorized."""
+    error_msg = str(e)
+    if "401" in error_msg or "Unauthorized" in error_msg or "Invalid username or password" in error_msg:
+        print(
+            f"\nFOUT bij {context}: 401 Unauthorized\n"
+            f"  De Hugging Face API key wordt niet geaccepteerd.\n"
+            f"  Mogelijke oorzaken:\n"
+            f"    - Token is ongeldig of verlopen\n"
+            f"    - Token heeft onvoldoende rechten (moet 'Read' of 'Write' zijn)\n"
+            f"    - Token wordt niet correct doorgegeven in de Authorization header\n"
+            f"  Controleer je token op https://huggingface.co/settings/tokens\n"
+            f"  originele fout: {e}"
+        )
+    else:
+        print(f"Fout bij {context}: {e}")
 
 def generate_metadata(theme: str) -> dict:
     """Genereert metadata via InferenceClient (voorkomt 400 errors)."""
@@ -66,7 +105,7 @@ def generate_metadata(theme: str) -> dict:
         if match:
             return json.loads(match.group(0))
     except Exception as e:
-        print(f"Fout bij metadata: {e}")
+        _handle_hf_error(e, "metadata generatie")
         
     return {
         "title": f"Kleurplaat {theme}", 
@@ -423,10 +462,6 @@ def upload_and_post(metadata: dict, img_data: bytes, theme: str, i: int, categor
         print(f"WP Post fout: {post_resp.text}")
 
 def main():
-    if not HUGGINGFACE_TOKEN:
-        print("Error: Set HF_TOKEN environment variable")
-        return
-
     if not all([WP_URL, WP_USERNAME, WP_APP_PASSWORD]):
         print("Error: Set WORDPRESS_URL, WORDPRESS_USERNAME, and WORDPRESS_APP_PASSWORD environment variables")
         return
@@ -494,7 +529,7 @@ def main():
                 upload_and_post(meta, img_content, theme.replace(" ", "-"), i, categories=[theme])
 
             except Exception as e:
-                print(f"Afbeelding generatie fout: {e}")
+                _handle_hf_error(e, f"afbeelding generatie ({theme})")
 
             time.sleep(2)
 if __name__ == "__main__":

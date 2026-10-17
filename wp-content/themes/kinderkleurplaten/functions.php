@@ -445,113 +445,557 @@ function kk_ultieme_galerij_shortcode() {
 		<?php endif; ?>
 	</div>
 	<?php
-	wp_reset_postdata();
-	return ob_get_clean();
+wp_reset_postdata();
+    return ob_get_clean();
 }
 
+/**
+ * Add meta box to mark kleurplaten as "uitgelicht" (featured).
+ */
+add_action('add_meta_boxes', 'kk_add_featured_metabox');
+function kk_add_featured_metabox() {
+    add_meta_box(
+        'kk_featured_metabox',
+        __('Uitgelichte kleurplaat', 'kinderkleurplaten'),
+        'kk_featured_metabox_callback',
+        'kleurplaten',
+        'side',
+        'high'
+    );
+}
+
+function kk_featured_metabox_callback($post) {
+    wp_nonce_field('kk_featured_metabox', 'kk_featured_metabox_nonce');
+    $is_featured = get_post_meta($post->ID, '_kk_featured', true);
+    ?>
+    <p>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" name="kk_featured" value="1" <?php checked($is_featured, '1'); ?> style="width: 20px; height: 20px;">
+            <span style="font-weight: 600;"><?php esc_html_e('Markeer als uitgelichte kleurplaat', 'kinderkleurplaten'); ?></span>
+        </label>
+    </p>
+    <p class="description" style="margin-top: 8px; font-size: 12px; color: #666;">
+        <?php esc_html_e('Uitgelichte kleurplaten worden getoond op de homepage in de "Uitgelichte kleurplaten" sectie.', 'kinderkleurplaten'); ?>
+    </p>
+    <?php
+}
+
+add_action('save_post_kleurplaten', 'kk_save_featured_metabox');
+function kk_save_featured_metabox($post_id) {
+    if (!isset($_POST['kk_featured_metabox_nonce']) || !wp_verify_nonce($_POST['kk_featured_metabox_nonce'], 'kk_featured_metabox')) {
+        return;
+    }
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    $is_featured = isset($_POST['kk_featured']) ? '1' : '0';
+    update_post_meta($post_id, '_kk_featured', $is_featured);
+}
+
+/**
+ * Shortcode: [kleurplaten_uitgelicht] — toont uitgelichte kleurplaten.
+ * Attributen:
+ *  - limit (int) Aantal kleurplaten (default: 4)
+ *  - columns (int) Aantal kolommen (default: 4)
+ */
+add_shortcode('kleurplaten_uitgelicht', 'kk_kleurplaten_uitgelicht_shortcode');
+function kk_kleurplaten_uitgelicht_shortcode($atts = array()) {
+    $atts = shortcode_atts(array(
+        'limit'   => 4,
+        'columns' => 4,
+    ), $atts, 'kleurplaten_uitgelicht');
+
+    $query = new WP_Query(array(
+        'post_type'      => 'kleurplaten',
+        'post_status'    => 'publish',
+        'posts_per_page' => intval($atts['limit']),
+        'meta_key'       => '_kk_featured',
+        'meta_value'     => '1',
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+    ));
+
+    if (!$query->have_posts()) {
+        return '';
+    }
+
+    $columns = max(1, min(6, intval($atts['columns'])));
+    $grid_style = 'display:grid; gap:1.5rem; grid-template-columns:repeat(' . $columns . ', minmax(0, 1fr)); margin:2rem 0;';
+
+    ob_start();
+    ?>
+    <section class="kk-uitgelicht" aria-label="<?php esc_attr_e('Uitgelichte kleurplaten', 'kinderkleurplaten'); ?>">
+        <header class="kk-uitgelicht__header" style="margin-bottom: 1.5rem;">
+            <h2 class="kk-uitgelicht__title" style="font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 800; text-align: center; margin: 0 0 0.5rem;"><?php esc_html_e('Uitgelichte kleurplaten', 'kinderkleurplaten'); ?></h2>
+            <p class="kk-uitgelicht__subtitle" style="text-align: center; color: #667085; margin: 0; font-size: 1.1rem;"><?php esc_html_e('Onze favoriete kleurplaten van het moment', 'kinderkleurplaten'); ?></p>
+        </header>
+        <div class="kk-homepage-grid" style="<?php echo esc_attr($grid_style); ?>">
+            <?php while ($query->have_posts()) : $query->the_post(); ?>
+                <article class="kk-homepage-card" id="kk-kleurplaat-<?php echo esc_attr(get_the_ID()); ?>">
+                    <?php if (has_post_thumbnail()) : ?>
+                        <div class="kk-homepage-card__image">
+                            <a href="<?php the_permalink(); ?>">
+                                <?php the_post_thumbnail('medium_large', array('loading' => 'lazy', 'decoding' => 'async')); ?>
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                    <div class="kk-homepage-card__content">
+                        <h3 class="kk-homepage-card__title"><a href="<?php the_permalink(); ?>" style="color: inherit; text-decoration: none;"><?php the_title(); ?></a></h3>
+                        <a class="kk-homepage-card__download" href="<?php the_permalink(); ?>">
+                            <?php esc_html_e('Print kleurplaat', 'kinderkleurplaten'); ?>
+                        </a>
+                    </div>
+                </article>
+            <?php endwhile; ?>
+        </div>
+        <?php if ($query->found_posts > intval($atts['limit'])) : ?>
+            <p style="text-align: center; margin-top: 1.5rem;">
+                <a href="<?php echo esc_url(home_url('/kleurplaten/')); ?>" class="kk-button kk-button--print" style="display: inline-flex;">
+                    <?php esc_html_e('Bekijk alle kleurplaten', 'kinderkleurplaten'); ?>
+                </a>
+            </p>
+        <?php endif; ?>
+    </section>
+    <?php
+    wp_reset_postdata();
+    return ob_get_clean();
+}
+
+/**
+ * Gastenboek Security Configuration
+ */
+define('KK_GASTENBOEK_RATE_LIMIT_WINDOW', 3600); // 1 hour in seconds
+define('KK_GASTENBOEK_MAX_SUBMISSIONS_PER_IP', 3); // Max 3 submissions per hour per IP
+define('KK_GASTENBOEK_MIN_SUBMIT_TIME', 5); // Minimum 5 seconds between form load and submit
+define('KK_GASTENBOEK_BLOCKED_WORDS', 'viagra,cialis,casino,poker,betting,loan,credit,debt,mortgage,insurance,investment,bitcoin,crypto,forex,trading,pharmacy,drugs,porn,sex,xxx,adult,escort,dating,hookup,seo,backlink,backlinks,google,ranking,traffic,visitors,cheap,discount,free money,make money,work from home,earn cash,click here,buy now,order now,limited time,act now,guaranteed,no risk,risk free,miracle,cure,weight loss,lose weight,diet pill,male enhancement,penis enlargement,breast enlargement,anti-aging,wrinkle cream,hair loss,regrow hair');
+
+/**
+ * Get client IP address
+ */
+function kk_get_client_ip() {
+    $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+    foreach ($ip_keys as $key) {
+        if (!empty($_SERVER[$key])) {
+            $ips = explode(',', $_SERVER[$key]);
+            $ip = trim($ips[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+    }
+    return 'unknown';
+}
+
+/**
+ * Check rate limit for IP
+ */
+function kk_check_rate_limit($ip) {
+    $transient_key = 'kk_gb_ratelimit_' . sanitize_key($ip);
+    $submissions = get_transient($transient_key);
+    
+    if ($submissions === false) {
+        $submissions = 0;
+    }
+    
+    if ($submissions >= KK_GASTENBOEK_MAX_SUBMISSIONS_PER_IP) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Increment rate limit counter
+ */
+function kk_increment_rate_limit($ip) {
+    $transient_key = 'kk_gb_ratelimit_' . sanitize_key($ip);
+    $submissions = get_transient($transient_key);
+    
+    if ($submissions === false) {
+        $submissions = 0;
+    }
+    
+    $submissions++;
+    set_transient($transient_key, $submissions, KK_GASTENBOEK_RATE_LIMIT_WINDOW);
+}
+
+/**
+ * Check for spam content
+ */
+function kk_check_spam_content($text) {
+    $blocked_words = explode(',', KK_GASTENBOEK_BLOCKED_WORDS);
+    $text_lower = strtolower($text);
+    
+    foreach ($blocked_words as $word) {
+        $word = trim($word);
+        if ($word && strpos($text_lower, $word) !== false) {
+            return true;
+        }
+    }
+    
+    // Check for excessive URLs
+    $url_count = preg_match_all('/https?:\/\/\S+/', $text);
+    if ($url_count > 1) {
+        return true;
+    }
+    
+    // Check for excessive repetition
+    $words = str_word_count(strtolower($text), 1);
+    if (count($words) > 10) {
+        $word_freq = array_count_values($words);
+        foreach ($word_freq as $word => $count) {
+            if ($count > 5 && strlen($word) > 3) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Sanitize guestbook input strictly
+ */
+function kk_sanitize_gastenboek_input($input, $type = 'text') {
+    // Remove null bytes
+    $input = str_replace("\0", '', $input);
+    
+    // Remove control characters except newlines/tabs
+    $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
+    
+    if ($type === 'name') {
+        // Name: only letters, spaces, hyphens, apostrophes, dots
+        $input = preg_replace('/[^a-zA-ZÀ-ÿ\u0100-\u017F\s\-\'\.]/u', '', $input);
+        $input = trim($input);
+        // Limit length
+        $input = mb_substr($input, 0, 50);
+    } elseif ($type === 'message') {
+        // Message: allow more characters but strip HTML
+        $input = wp_strip_all_tags($input);
+        $input = trim($input);
+        $input = mb_substr($input, 0, 2000);
+    }
+    
+    return $input;
+}
+
+/**
+ * Generate server-side CAPTCHA challenge
+ */
+function kk_generate_captcha() {
+    $num1 = random_int(1, 20);
+    $num2 = random_int(1, 20);
+    $operation = random_int(1, 3); // 1=add, 2=subtract, 3=multiply
+    
+    switch ($operation) {
+        case 1:
+            $answer = $num1 + $num2;
+            $question = "$num1 + $num2";
+            break;
+        case 2:
+            // Ensure positive result
+            if ($num1 < $num2) { $temp = $num1; $num1 = $num2; $num2 = $temp; }
+            $answer = $num1 - $num2;
+            $question = "$num1 - $num2";
+            break;
+        case 3:
+            // Keep numbers small for multiplication
+            $num1 = random_int(1, 10);
+            $num2 = random_int(1, 10);
+            $answer = $num1 * $num2;
+            $question = "$num1 × $num2";
+            break;
+    }
+    
+    // Store in session (transient with short expiry)
+    $captcha_key = 'kk_gb_captcha_' . session_id();
+    set_transient($captcha_key, $answer, 300); // 5 minutes
+    
+    return [
+        'question' => $question,
+        'answer' => $answer,
+        'token' => wp_generate_password(32, false),
+    ];
+}
+
+/**
+ * Verify CAPTCHA answer
+ */
+function kk_verify_captcha($answer, $token) {
+    $captcha_key = 'kk_gb_captcha_' . $token;
+    $stored_answer = get_transient($captcha_key);
+    
+    // Delete after use (one-time)
+    delete_transient($captcha_key);
+    
+    if ($stored_answer === false) {
+        return false; // Expired or invalid token
+    }
+    
+    return intval($answer) === intval($stored_answer);
+}
+
+/**
+ * Handle guestbook submission with enhanced security
+ */
 add_action('init', 'kk_handle_gastenboek_submit');
 function kk_handle_gastenboek_submit() {
-	if (!isset($_POST['kk_gastenboek_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['kk_gastenboek_nonce'])), 'kk_gastenboek_submit')) {
-		return;
-	}
-
-	$name = sanitize_text_field(wp_unslash($_POST['kk_gastenboek_name']));
-	$message = sanitize_textarea_field(wp_unslash($_POST['kk_gastenboek_message']));
-	$captcha_answer = isset($_POST['kk_captcha_answer']) ? intval($_POST['kk_captcha_answer']) : 0;
-	$captcha_expected = isset($_POST['kk_captcha_expected']) ? intval($_POST['kk_captcha_expected']) : 0;
-
-	if ($captcha_answer !== $captcha_expected) {
-		return;
-	}
-
-	if ($name === '' || $message === '') {
-		return;
-	}
-
-	$post_id = wp_insert_post(array(
-		'post_type'    => 'gastenboek_bericht',
-		'post_status'  => 'pending',
-		'post_title'   => $name,
-		'post_content' => $message,
-	));
-
-	if (is_wp_error($post_id)) {
-		return;
-	}
-
-	$redirect_to = wp_get_referer();
-	if (!$redirect_to) {
-		$redirect_to = home_url('/');
-	}
-
-	wp_safe_redirect(add_query_arg('kk_gb_sent', '1', $redirect_to));
-	exit;
+    // Only process POST requests to the guestbook page
+    if (!isset($_POST['kk_gastenboek_submit']) || $_POST['kk_gastenboek_submit'] !== '1') {
+        return;
+    }
+    
+    // Verify nonce
+    if (!isset($_POST['kk_gastenboek_nonce']) || !wp_verify_nonce($_POST['kk_gastenboek_nonce'], 'kk_gastenboek_submit')) {
+        wp_die(__('Ongeldig verzoek. Probeer het opnieuw.', 'kinderkleurplaten'), 403);
+    }
+    
+    // Rate limiting
+    $ip = kk_get_client_ip();
+    if (!kk_check_rate_limit($ip)) {
+        wp_die(__('Te veel pogingen. Probeer het over een uur opnieuw.', 'kinderkleurplaten'), 429);
+    }
+    
+    // Honeypot field (should be empty)
+    if (!empty($_POST['kk_gb_website'])) {
+        // Bot detected - silently fail but don't increment rate limit
+        wp_safe_redirect(add_query_arg('kk_gb_sent', '1', wp_get_referer() ?: home_url('/')));
+        exit;
+    }
+    
+    // Time-based validation (prevent too-fast submissions)
+    $form_load_time = isset($_POST['kk_gb_form_time']) ? intval($_POST['kk_gb_form_time']) : 0;
+    $submit_time = time();
+    if ($form_load_time > 0 && ($submit_time - $form_load_time) < KK_GASTENBOEK_MIN_SUBMIT_TIME) {
+        wp_die(__('Te snel verzonden. Wacht even en probeer opnieuw.', 'kinderkleurplaten'), 400);
+    }
+    
+    // Get and sanitize inputs
+    $name = kk_sanitize_gastenboek_input(wp_unslash($_POST['kk_gastenboek_name']), 'name');
+    $message = kk_sanitize_gastenboek_input(wp_unslash($_POST['kk_gastenboek_message']), 'message');
+    
+    // Validate required fields
+    if (empty($name) || empty($message)) {
+        wp_die(__('Naam en bericht zijn verplicht.', 'kinderkleurplaten'), 400);
+    }
+    
+    if (mb_strlen($name) < 2) {
+        wp_die(__('Naam is te kort.', 'kinderkleurplaten'), 400);
+    }
+    
+    if (mb_strlen($message) < 10) {
+        wp_die(__('Bericht is te kort (minimaal 10 tekens).', 'kinderkleurplaten'), 400);
+    }
+    
+    // Spam check
+    if (kk_check_spam_content($name) || kk_check_spam_content($message)) {
+        // Log attempt but don't reveal it's spam detection
+        error_log('[GASTENBOEK] Spam blocked from IP: ' . $ip);
+        wp_safe_redirect(add_query_arg('kk_gb_sent', '1', wp_get_referer() ?: home_url('/')));
+        exit;
+    }
+    
+    // Verify CAPTCHA
+    $captcha_answer = isset($_POST['kk_captcha_answer']) ? intval($_POST['kk_captcha_answer']) : 0;
+    $captcha_token = isset($_POST['kk_captcha_token']) ? sanitize_text_field($_POST['kk_captcha_token']) : '';
+    
+    if (!kk_verify_captcha($captcha_answer, $captcha_token)) {
+        wp_die(__('Ongeldige controle. Probeer het opnieuw.', 'kinderkleurplaten'), 400);
+    }
+    
+    // All checks passed - create post
+    $post_id = wp_insert_post([
+        'post_type'    => 'gastenboek_bericht',
+        'post_status'  => 'pending',
+        'post_title'   => $name,
+        'post_content' => $message,
+        'post_author'  => 0, // Guest author
+    ], true);
+    
+    if (is_wp_error($post_id)) {
+        error_log('[GASTENBOEK] Failed to create post: ' . $post_id->get_error_message());
+        wp_die(__('Er is een fout opgetreden. Probeer het later opnieuw.', 'kinderkleurplaten'), 500);
+    }
+    
+    // Store IP for moderation (optional, for admin review)
+    update_post_meta($post_id, '_kk_gb_ip', $ip);
+    update_post_meta($post_id, '_kk_gb_user_agent', substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255));
+    
+    // Increment rate limit
+    kk_increment_rate_limit($ip);
+    
+    // Redirect with success
+    $redirect_to = wp_get_referer() ?: home_url('/');
+    wp_safe_redirect(add_query_arg('kk_gb_sent', '1', $redirect_to));
+    exit;
 }
 
+/**
+ * Guestbook shortcode with enhanced security
+ */
 add_shortcode('kk_gastenboek', 'kk_gastenboek_shortcode');
 function kk_gastenboek_shortcode() {
-	$num1 = rand(1, 10);
-	$num2 = rand(1, 10);
-	$expected = $num1 + $num2;
-	
-	ob_start();
-	?>
-	<div class="kk-gastenboek-shell">
-		<form class="kk-gastenboek-form" method="post" action="">
-			<?php wp_nonce_field('kk_gastenboek_submit', 'kk_gastenboek_nonce'); ?>
-			<label class="kk-gastenboek-field">
-				<span><?php esc_html_e('Naam', 'kinderkleurplaten'); ?></span>
-				<input type="text" name="kk_gastenboek_name" required>
-			</label>
-			<label class="kk-gastenboek-field">
-				<span><?php esc_html_e('Bericht', 'kinderkleurplaten'); ?></span>
-				<textarea name="kk_gastenboek_message" required></textarea>
-			</label>
-			<label class="kk-gastenboek-field">
-				<span><?php esc_html_e('Controle', 'kinderkleurplaten'); echo ' ' . $num1 . ' + ' . $num2 . ' = ?'; ?></span>
-				<input type="number" name="kk_captcha_answer" required>
-				<input type="hidden" name="kk_captcha_expected" value="<?php echo esc_attr($expected); ?>">
-			</label>
-			<button class="kk-gastenboek-button" type="submit"><?php esc_html_e('Verstuur bericht', 'kinderkleurplaten'); ?></button>
-		</form>
+    // Generate CAPTCHA
+    $captcha = kk_generate_captcha();
+    $form_time = time();
+    
+    ob_start();
+    ?>
+    <div class="kk-gastenboek-shell">
+        <form class="kk-gastenboek-form" method="post" action="">
+            <input type="hidden" name="kk_gastenboek_submit" value="1">
+            <?php wp_nonce_field('kk_gastenboek_submit', 'kk_gastenboek_nonce'); ?>
+            
+            <!-- Honeypot field (hidden via CSS) -->
+            <div class="kk-gb-honeypot" style="display:none !important; position:absolute; left:-9999px;" tabindex="-1" autocomplete="off">
+                <label for="kk_gb_website"><?php esc_html_e('Website', 'kinderkleurplaten'); ?></label>
+                <input type="text" name="kk_gb_website" id="kk_gb_website" value="" autocomplete="off">
+            </div>
+            
+            <!-- Form load time for rate limiting -->
+            <input type="hidden" name="kk_gb_form_time" value="<?php echo esc_attr($form_time); ?>">
+            
+            <label class="kk-gastenboek-field">
+                <span><?php esc_html_e('Naam', 'kinderkleurplaten'); ?></span>
+                <input type="text" name="kk_gastenboek_name" required maxlength="50" autocomplete="name">
+            </label>
+            <label class="kk-gastenboek-field">
+                <span><?php esc_html_e('Bericht', 'kinderkleurplaten'); ?></span>
+                <textarea name="kk_gastenboek_message" required maxlength="2000" rows="5" autocomplete="off"></textarea>
+            </label>
+            <label class="kk-gastenboek-field">
+                <span><?php esc_html_e('Controle', 'kinderkleurplaten'); echo ' ' . esc_html($captcha['question']) . ' = ?'; ?></span>
+                <input type="number" name="kk_captcha_answer" required autocomplete="off">
+                <input type="hidden" name="kk_captcha_token" value="<?php echo esc_attr($captcha['token']); ?>">
+            </label>
+            <button class="kk-gastenboek-button" type="submit"><?php esc_html_e('Verstuur bericht', 'kinderkleurplaten'); ?></button>
+        </form>
 
-		<?php if (isset($_GET['kk_gb_sent'])) : ?>
-			<p class="kk-gastenboek-notice"><?php esc_html_e('Bedankt! Je bericht wacht op moderatie.', 'kinderkleurplaten'); ?></p>
-		<?php endif; ?>
+        <?php if (isset($_GET['kk_gb_sent'])) : ?>
+            <p class="kk-gastenboek-notice"><?php esc_html_e('Bedankt! Je bericht wacht op moderatie.', 'kinderkleurplaten'); ?></p>
+        <?php endif; ?>
 
-		<div class="kk-gastenboek-list">
-			<?php
-			$messages_query = new WP_Query(array(
-				'post_type'      => 'gastenboek_bericht',
-				'post_status'    => 'publish',
-				'posts_per_page' => 10,
-				'orderby'        => 'date',
-				'order'          => 'DESC',
-			));
+        <div class="kk-gastenboek-list">
+            <?php
+            $messages_query = new WP_Query([
+                'post_type'      => 'gastenboek_bericht',
+                'post_status'    => 'publish',
+                'posts_per_page' => 10,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+            ]);
 
-			if ($messages_query->have_posts()) :
-				while ($messages_query->have_posts()) : $messages_query->the_post();
-					?>
-					<article class="kk-gastenboek-card">
-						<h3><?php echo esc_html(get_the_title()); ?></h3>
-						<p><?php echo wp_kses_post(get_the_content()); ?></p>
-					</article>
-					<?php
-				endwhile;
-			else :
-				?>
-				<article class="kk-gastenboek-card">
-					<p><?php esc_html_e('Er zijn nog geen goedgekeurde berichten.', 'kinderkleurplaten'); ?></p>
-				</article>
-				<?php
-			endif;
+            if ($messages_query->have_posts()) :
+                while ($messages_query->have_posts()) : $messages_query->the_post();
+                    ?>
+                    <article class="kk-gastenboek-card">
+                        <h3><?php echo esc_html(get_the_title()); ?></h3>
+                        <p><?php echo wp_kses_post(get_the_content()); ?></p>
+                    </article>
+                    <?php
+                endwhile;
+            else :
+                ?>
+                <article class="kk-gastenboek-card">
+                    <p><?php esc_html_e('Er zijn nog geen goedgekeurde berichten.', 'kinderkleurplaten'); ?></p>
+                </article>
+                <?php
+            endif;
 
-			wp_reset_postdata();
-			?>
-		</div>
-	</div>
-	<?php
-	return ob_get_clean();
+            wp_reset_postdata();
+            ?>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+/**
+ * Admin: Send email notification on new guestbook entry
+ */
+add_action('transition_post_status', 'kk_gastenboek_notify_admin', 10, 3);
+function kk_gastenboek_notify_admin($new_status, $old_status, $post) {
+    if ($post->post_type !== 'gastenboek_bericht') {
+        return;
+    }
+    
+    // Only notify on new pending posts (not transitions from pending to publish)
+    if ($new_status === 'pending' && $old_status !== 'pending') {
+        $admin_email = get_option('admin_email');
+        $site_name = get_bloginfo('name');
+        $post_title = get_the_title($post->ID);
+        $post_content = get_the_content(null, false, $post->ID);
+        $ip = get_post_meta($post->ID, '_kk_gb_ip', true);
+        $user_agent = get_post_meta($post->ID, '_kk_gb_user_agent', true);
+        $edit_url = get_edit_post_link($post->ID);
+        
+        $subject = sprintf('[%s] Nieuw gastenboekbericht: %s', $site_name, $post_title);
+        
+        $message = "Er is een nieuw gastenboekbericht ontvangen dat wacht op moderatie.\n\n";
+        $message .= "Naam: {$post_title}\n";
+        $message .= "IP: {$ip}\n";
+        $message .= "User Agent: {$user_agent}\n\n";
+        $message .= "Bericht:\n{$post_content}\n\n";
+        $message .= "Moderatie: {$edit_url}\n";
+        
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+        
+        @wp_mail($admin_email, $subject, $message, $headers);
+    }
+}
+
+/**
+ * Admin: Add IP column to guestbook posts list
+ */
+add_filter('manage_edit-gastenboek_bericht_columns', 'kk_gastenboek_admin_columns');
+function kk_gastenboek_admin_columns($columns) {
+    $new_columns = [];
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'title') {
+            $new_columns['kk_gb_ip'] = 'IP Adres';
+            $new_columns['kk_gb_date'] = 'Datum';
+        }
+    }
+    return $new_columns;
+}
+
+add_action('manage_gastenboek_bericht_posts_custom_column', 'kk_gastenboek_admin_column_content', 10, 2);
+function kk_gastenboek_admin_column_content($column, $post_id) {
+    switch ($column) {
+        case 'kk_gb_ip':
+            echo esc_html(get_post_meta($post_id, '_kk_gb_ip', true) ?: 'Onbekend');
+            break;
+        case 'kk_gb_date':
+            echo get_the_date('d-m-Y H:i', $post_id);
+            break;
+    }
+}
+
+/**
+ * Admin: Add quick actions for guestbook moderation
+ */
+add_filter('post_row_actions', 'kk_gastenboek_row_actions', 10, 2);
+function kk_gastenboek_row_actions($actions, $post) {
+    if ($post->post_type !== 'gastenboek_bericht') {
+        return $actions;
+    }
+    
+    if ($post->post_status === 'pending') {
+        $actions['approve'] = '<a href="' . wp_nonce_url(admin_url("post.php?action=approve&post={$post->ID}"), 'approve-post_' . $post->ID) . '">Goedkeuren</a>';
+        $actions['spam'] = '<a href="' . wp_nonce_url(admin_url("post.php?action=spam&post={$post->ID}"), 'spam-post_' . $post->ID) . '" style="color:#d63636;">Spam markeren</a>';
+    } elseif ($post->post_status === 'publish') {
+        $actions['unapprove'] = '<a href="' . wp_nonce_url(admin_url("post.php?action=unapprove&post={$post->ID}"), 'unapprove-post_' . $post->ID) . '">Ongedaan maken</a>';
+    }
+    
+    return $actions;
 }
 
 if (!function_exists('kinderkleurplaten_gallery_shortcode')) {
@@ -1097,6 +1541,124 @@ add_action('rest_api_init', function() {
         },
     ));
 });
+
+/**
+ * Create essential pages and menu items on theme setup.
+ * Runs once when the theme is activated or on init if pages don't exist.
+ */
+add_action('after_switch_theme', 'kk_create_essential_pages');
+add_action('init', 'kk_create_essential_pages');
+
+function kk_create_essential_pages() {
+    // Only run once - check if pages already exist
+    if (get_option('kinderkleurplaten_pages_created', false)) {
+        return;
+    }
+
+    $pages = array(
+        'gastenboek' => array(
+            'title'   => 'Gastenboek',
+            'slug'    => 'gastenboek',
+            'content' => '[kk_gastenboek]',
+        ),
+    );
+
+    foreach ($pages as $slug => $page_data) {
+        // Check if page already exists
+        $existing_page = get_page_by_path($slug);
+        if (!$existing_page) {
+            $page_id = wp_insert_post(array(
+                'post_title'   => $page_data['title'],
+                'post_name'    => $page_data['slug'],
+                'post_content' => $page_data['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'page',
+            ));
+
+            if (!is_wp_error($page_id)) {
+                // Store page ID for menu creation
+                update_option("kinderkleurplaten_page_{$slug}_id", $page_id);
+            }
+        } else {
+            // Update existing page with shortcode if needed
+            if (strpos($existing_page->post_content, '[kk_gastenboek]') === false) {
+                wp_update_post(array(
+                    'ID'           => $existing_page->ID,
+                    'post_content' => $page_data['content'],
+                ));
+            }
+            update_option("kinderkleurplaten_page_{$slug}_id", $existing_page->ID);
+        }
+    }
+
+    // Create or update primary menu
+    kk_setup_primary_menu();
+
+    // Mark as done
+    update_option('kinderkleurplaten_pages_created', true);
+}
+
+/**
+ * Set up the primary navigation menu with required items.
+ */
+function kk_setup_primary_menu() {
+    $menu_name = 'Hoofdmenu';
+
+    // Get or create the menu
+    $menu = wp_get_nav_menu_object($menu_name);
+    if (!$menu) {
+        $menu_id = wp_create_nav_menu($menu_name);
+        if (is_wp_error($menu_id)) {
+            return;
+        }
+        $menu = wp_get_nav_menu_object($menu_name);
+    }
+
+    $menu_id = $menu->term_id;
+
+    // Define menu items in order
+    $menu_items = array(
+        array(
+            'title' => 'Home',
+            'url'   => home_url('/'),
+            'order' => 1,
+        ),
+        array(
+            'title' => 'Kleurplaten',
+            'url'   => home_url('/kleurplaten/'),
+            'order' => 2,
+        ),
+        array(
+            'title' => 'Gastenboek',
+            'url'   => home_url('/gastenboek/'),
+            'order' => 3,
+        ),
+    );
+
+    // Clear existing menu items for this menu
+    $existing_items = wp_get_nav_menu_items($menu_id);
+    if ($existing_items) {
+        foreach ($existing_items as $item) {
+            wp_delete_post($item->ID, true);
+        }
+    }
+
+    // Add new menu items
+    foreach ($menu_items as $item_data) {
+        wp_update_nav_menu_item($menu_id, 0, array(
+            'menu-item-title'     => $item_data['title'],
+            'menu-item-url'       => $item_data['url'],
+            'menu-item-status'    => 'publish',
+            'menu-item-type'      => 'custom',
+            'menu-item-position'  => $item_data['order'],
+        ));
+    }
+
+    // Assign menu to primary location
+    $locations = get_theme_mod('nav_menu_locations');
+    $locations['primary'] = $menu_id;
+    set_theme_mod('nav_menu_locations', $locations);
+}
 
 /**
  * Shortcode: [kleurplaat_categories] — toont categoriekaarten uit

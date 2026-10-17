@@ -1,0 +1,30 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_upload_files_free_for_all"</b> filter is used to allow just any visitor to upload images.
+Please understand that this can attract a lot of spam, so you want to keep a close look at what is being uploaded.
+Moderation emails is the best way to keep updated on what is being uploaded.
+
+You can use this filter as:
+
+<code><?php add_filter( 'gwolle_gb_upload_files_free_for_all', 'filter_function_name' ) ?></code>
+
+Where 'filter_function_name' is the function WordPress should call when the filter is being used.
+
+'''filter_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+
+function my_gwolle_gb_upload_files_free_for_all( $disabled ) {
+	// $disabled is a boolean
+	//$disabled = false; // default
+	$disabled = true;
+
+	return $disabled;
+}
+add_filter( 'gwolle_gb_upload_files_free_for_all', 'my_gwolle_gb_upload_files_free_for_all' );
+
+

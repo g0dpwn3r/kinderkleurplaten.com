@@ -1,0 +1,199 @@
+
+== Changelog from addon version 2.0.0 to 2.10.2 ==
+
+= 2.10.2 =
+* 2026-02-06
+* Move JavaScript from footer/html to JavaScript file.
+* Only load this JavaScript when needed.
+* Add function gwolle_gb_addon_add_nonce_to_entries_list.
+
+= 2.10.1 =
+* 2026-02-02
+* Only load JavaScript and CSS when needed.
+
+= 2.10.0 =
+* 2025-12-23
+* Rewrite most frontend jQuery code into vanilla JavaScript.
+* Remove deprecated gwolle_gb_addon_preview_callback (as jQuery.Callbacks).
+* Add labels to meta fields.
+* Add label to admin page.
+* Small visual improvements for likes.
+* Use ip block list for (not) reporting abuse.
+* Use plugin_dir_path instead of WP_PLUGIN_DIR.
+* Better sanitizing of settings.
+* Verify Nonces correctly.
+* Add function gwolle_gb_addon_setting_array_sanitize.
+* Set autoload explicitly for options.
+* Remove social media service Pocket.
+* Update RateIt to v1.1.6.
+* Load standard version of RateIt, no need for minified version.
+
+= 2.9.0 =
+* 2025-05-04
+* Add JavaScript function 'gwolle_gb_addon_frontend_callback_function'.
+
+= 2.8.1 =
+* 2025-03-11
+* Fix sitemap for WordPress Core Sitemap.
+* Fix sitemap for All In One SEO Pack.
+* Fix sitemap for Google Sitemap Generator.
+* Fix sitemap for XML Sitemap Feed.
+
+= 2.8.0 =
+* 2025-02-18
+* Hopefully fix escaping with string replacement.
+* Enlarge upload filesize to 6 MiB.
+* Add filter 'gwolle_gb_addon_get_upload_media_size'.
+* Add plugin dependency for WP 6.5.
+* Use sanitize_text_field for user_ip.
+* Add function 'gwolle_gb_addon_get_field_id()' for compatibility.
+* Fix formfields to have an id attribute, for accessibility (thanks chris0815).
+* Better check for direct access of files.
+* Use __DIR__ instead of dirname(__FILE__).
+* Add docs for filters and actions.
+
+= 2.7.0 =
+* 2023-04-07
+* Revamp likes.
+* Add unlikes.
+* Set default location for likes under content.
+* Add own CSS file to add-on.
+* Remove function 'gwolle_gb_entry_metabox_lines_like_ajax'.
+* Escape more output.
+* Take some hints from phpcs.
+
+= 2.6.0 =
+* 2023-01-24
+* Use 'wp_required_field_indicator' function from WordPress Core 6.1 if available.
+* Add location for star rating at author info heading, requires latest gwolle plugin.
+
+= 2.5.1 =
+* 2022-11-19
+* Quick fix for missing roles.
+
+= 2.5.0 =
+* 2022-11-11
+* Use custom capabilities 'gwolle_gb_moderate_comments' and 'gwolle_gb_upload_files'.
+* Fix warning in notification email of uploaded media.
+
+= 2.4.0 =
+* 2022-09-01
+* Add Automatic Refresh.
+* Add email notification for uploaded media.
+* Add options for adding meta fields to the widget.
+* Dependency for jquery should be an array.
+* Only use 'gwolle_gb_ajax_callback' for callbacks.
+
+= 2.3.0 =
+* 2022-03-16
+* Add option to upload images through the form.
+  (Only for Author, Editor and Administrator with capability 'upload_files').
+* Fix double listing of total entries, when average star rating is enabled.
+* Change priority of average star rating hook.
+* Place "clearboth" divs inside div for form field, compatibility with zass theme.
+* Use 'urlencode' for social media sharing link.
+* Add social media services: WhatsApp, Pocket, Tumblr.
+  Asking for testers for Pocket and Tumblr.
+* Remove social media services: VK.
+* Require 4.2.2 or newer of main plugin.
+
+= 2.2.1 =
+* 2022-01-14
+* Fix silly typo for average star rating.
+* Make sure to use 'int' for star rating.
+* Use function 'gwolle_gb_array_flatten()' instead of 'print_r()'.
+* Fix sitemaps, always use 'int', not the 'float' from 'ceil()' for total pages.
+* Add class to frontend form and list of entries to indicate this addon is active.
+
+= 2.2.0 =
+* 2021-11-19
+* Fix saving select dropdown, when nothing was selected.
+* Set form fields for name and slug to required, so slug always gets filled in.
+* Use more 'esc_attr' function where appropriate.
+* Fix deleting entry for author.
+* Run update hook in 'init' instead of 'admin_init' to support background updates.
+* No need to check if function 'current_user_can' and 'is_multisite' exist.
+
+= 2.1.3 =
+* 2021-09-28
+* Add span elements around meta fields display, so there can be CSS for them.
+
+= 2.1.2 =
+* 2021-09-13
+* Always return data on 'gwolle_gb_addon_starrating_average_hook' function.
+* Use 'sanitize_text_field()' for permalink on AJAX request.
+
+= 2.1.1 =
+* 2021-09-07
+* Fix JavaScript dependencies in star rating.
+* Update text for privacy policy, add text for likes.
+* Add update URI to plugin header so wp.org will not update this plugin.
+
+= 2.1.0 =
+* 2021-03-02
+* Extend edit in metabox to author name and city/origin, add labels.
+* Fix deprecated jQuery calls with WP 5.6 and jQuery 3.5.
+* Fix order of loading JavaScript for starrating.
+* Fix warning when reporting abuse.
+* Set steps for starrating on admin to "1" as well.
+* Change 'intval()' to '(int)'.
+* Change 'strval()' to '(string)'.
+* Change 'floatval()' to '(int)' for starrating.
+* Require at least v4.0.8 of gwolle-gb.
+
+= 2.0.5 =
+* 2020-10-06
+* Remove placeholders in form, labels should be enough.
+* Don't use constants from the main plugin, in case it is not active.
+* Show admin notice everywhere when main plugin is not active.
+
+= 2.0.4 =
+* 2020-08-11
+* Fix saving star rating on admin editor.
+* Add Settings link to the main plugin page.
+
+= 2.0.3 =
+* 2020-07-21
+* Fix Rich Snippet for Average Star Rating.
+* Remove blocklist, it is part of main plugin.
+
+= 2.0.2 =
+* 2020-06-22
+* Support XML Sitemaps that are in WordPress Core since WP 5.5.
+* Remove ':' from form labels.
+* Only load JavaScript in 'wp_footer' when needed.
+* Fixed a few actions for 'gwolle_gb_save_entry_admin'.
+* Use standard From addres 'wordpress@domain.com' as default.
+* Fix PHP Warning.
+* Add wrapper function 'gwolle_gb_addon_get_user_ip()'.
+* Remove function 'gwolle_gb_addon_report_get_user_ip()'.
+* Do not hook 'gwolle_gb_save_entry_frontend' to delete ajax, only clear cache.
+
+= 2.0.1 =
+* 2020-05-13
+* Add unlike function after likes.
+* Extend delete/anonymize to 6 and 12 months as well.
+* Fix starrating for preview on some hosts.
+* Fix form settings to be able to add options to new radiobuttons or select dropdown.
+* Fix form settings to always save 'required' setting correctly.
+* Set error for select element on 'div.input'.
+* Use either page title or widget title for star rating snippet, use 'esc_attr()'.
+* Set min-height/min-width for rating reset button.
+* Fix PHP warnings.
+
+= 2.0.0 =
+* 2020-04-29
+* Require version 4.0.0 of Gwolle Guestbook plugin.
+* Support multiple forms for preview and starrating.
+* Redesigned form-tab on settings page.
+* Add option for meta fields for required field.
+* Support different form elements; text, checkbox, radio buttons, select dropdown, textarea.
+* Add option to like an entry and view the likes.
+* Show starrating in preview.
+* Mark meta field slugs for 'starrating' and 'likes' as reserved.
+* Only load admin pages on dashboard, not frontend.
+* Fix serialized options.
+* Add callback 'gwolle_gb_addon_preview_callback'.
+* Support arrays in meta field values.
+* Add parameter '$flush' to 'gwolle_gb_addon_get_meta' for flushing the meta cache.
+* For each entry, only one abuse report at the same time.

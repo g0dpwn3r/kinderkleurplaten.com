@@ -1,0 +1,31 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_enqueue"</b> action is used to be able to load your own 
+css or javascript in the frontend.
+
+You can use this action as:
+
+<code><?php add_action( 'gwolle_gb_enqueue', 'action_function_name' ) ?></code>
+
+Where 'action_function_name' is the function WordPress should call when the action is being used.
+
+'''action_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+function my_gwolle_gb_enqueue( $enqueue_css ) {
+	// $enqueue_css is a boolean;
+        // true means default css of the plugin was loaded.
+        // false means it was not.
+
+	if ( ! $enqueue_css ) {
+                // load my own css.
+                wp_enqueue_style( 'my_gwolle_gb_frontend_css', 'my_location/gwolle_gb.css', true );
+        }
+
+}
+add_action( 'gwolle_gb_enqueue', 'my_gwolle_gb_enqueue' );
+

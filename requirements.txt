@@ -2,3 +2,4 @@ requests
 python-dotenv
 huggingface-hub
 deep-translator
+Pillow

