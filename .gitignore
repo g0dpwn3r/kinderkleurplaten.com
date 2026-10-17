@@ -52,3 +52,6 @@ __pycache__/
 # uncomment the next line
 #/wp-content/themes
 get-board.py
+# Backup files with secrets
+.env*
+*.bak
