@@ -1517,7 +1517,733 @@ button.button {
 	}
 }
 
-/* Force full-width layout for Privacy Policy page (page ID 78) */
+/* ============================================================
+   NEW HOMEPAGE COMPONENTS
+   Modern, mobile-first design for Kinderkleurplaten.com
+   ============================================================ */
+
+/* --- Hero Section --- */
+.kk-hero {
+	position: relative;
+	overflow: hidden;
+	margin: 0;
+	padding: clamp(3rem, 8vw, 6rem) 0;
+	border-radius: 0;
+	background: linear-gradient(135deg, rgba(255, 107, 157, 0.12), rgba(76, 201, 240, 0.10));
+}
+
+.kk-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background:
+		radial-gradient(circle at 20% 30%, rgba(255, 209, 102, 0.35), transparent 25rem),
+		radial-gradient(circle at 80% 70%, rgba(76, 201, 240, 0.28), transparent 22rem),
+		radial-gradient(circle at 50% 90%, rgba(114, 239, 178, 0.22), transparent 18rem);
+}
+
+.kk-hero__content {
+	position: relative;
+	z-index: 1;
+	text-align: center;
+	max-width: 880px;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.kk-hero__kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0 0 1rem;
+	padding: 0.45rem 1rem;
+	border-radius: 999px;
+	background: rgba(255, 107, 157, 0.16);
+	color: #7a4b00;
+	font-weight: 900;
+	font-size: 0.95rem;
+	letter-spacing: 0.08em;
+}
+
+.kk-hero__title {
+	margin: 0 0 1rem;
+	font-size: clamp(2.4rem, 8vw, 4.8rem);
+	line-height: 1.05;
+	letter-spacing: -0.06em;
+	color: var(--kk-ink);
+}
+
+.kk-hero__accent {
+	display: block;
+	color: var(--kk-pink-dark);
+}
+
+.kk-hero__subtitle {
+	margin: 0 0 1.75rem;
+	font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+	color: var(--kk-muted);
+	line-height: 1.7;
+	max-width: 720px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.kk-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.85rem;
+}
+
+/* --- Trust Section --- */
+.kk-trust {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: var(--kk-white);
+}
+
+.kk-trust__header {
+	text-align: center;
+	max-width: 720px;
+	margin: 0 auto 3rem;
+}
+
+.kk-trust__title {
+	margin: 0 0 0.75rem;
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+}
+
+.kk-trust__subtitle {
+	margin: 0;
+	font-size: clamp(1rem, 2vw, 1.15rem);
+	color: var(--kk-muted);
+	line-height: 1.6;
+}
+
+.kk-trust__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.5rem;
+}
+
+.kk-trust-card {
+	padding: 2rem 1.5rem;
+	border: 1px solid var(--kk-border);
+	border-radius: var(--kk-radius);
+	background: var(--kk-bg);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.06);
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.kk-trust-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 16px 40px rgba(36, 48, 66, 0.11);
+	border-color: rgba(255, 107, 157, 0.25);
+}
+
+.kk-trust-card__icon {
+	font-size: 2.5rem;
+	line-height: 1;
+}
+
+.kk-trust-card__title {
+	margin: 0;
+	font-size: 1.35rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: var(--kk-ink);
+}
+
+.kk-trust-card__text {
+	margin: 0;
+	color: var(--kk-muted);
+	font-size: 0.95rem;
+	line-height: 1.6;
+}
+
+/* --- Categories Section --- */
+.kk-categories {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: linear-gradient(180deg, var(--kk-bg), #fff);
+}
+
+.kk-categories__header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: 0.75rem;
+	margin-bottom: 2.5rem;
+}
+
+.kk-categories__title {
+	margin: 0;
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+}
+
+.kk-categories__subtitle {
+	margin: 0;
+	font-size: clamp(1rem, 2vw, 1.15rem);
+	color: var(--kk-muted);
+	line-height: 1.6;
+}
+
+.kk-categories__view-all {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 1rem;
+	font-weight: 800;
+	font-size: 0.95rem;
+	color: var(--kk-pink-dark);
+	text-decoration: none;
+	transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.kk-categories__view-all:hover {
+	color: var(--kk-pink-dark);
+	gap: 0.7rem;
+}
+
+.kk-categories__grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1.25rem;
+}
+
+.kk-category-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 1.75rem 1.25rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 22px;
+	background: var(--kk-white);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.06);
+	text-decoration: none;
+	transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.kk-category-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 16px 40px rgba(36, 48, 66, 0.11);
+	border-color: rgba(255, 107, 157, 0.25);
+}
+
+.kk-category-card__icon {
+	font-size: 2.5rem;
+	line-height: 1;
+	margin-bottom: 0.75rem;
+}
+
+.kk-category-card__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.2rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: var(--kk-ink);
+}
+
+.kk-category-card__count {
+	margin: 0;
+	font-size: 0.875rem;
+	color: var(--kk-muted);
+	font-weight: 600;
+}
+
+/* --- Latest Pages Section --- */
+.kk-latest {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: var(--kk-white);
+}
+
+.kk-latest__header {
+	text-align: center;
+	max-width: 720px;
+	margin: 0 auto 3rem;
+}
+
+.kk-latest__title {
+	margin: 0 0 0.75rem;
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+}
+
+.kk-latest__subtitle {
+	margin: 0;
+	font-size: clamp(1rem, 2vw, 1.15rem);
+	color: var(--kk-muted);
+	line-height: 1.6;
+}
+
+.kk-latest__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.25rem;
+}
+
+.kk-latest-card {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--kk-border);
+	border-radius: 22px;
+	background: var(--kk-white);
+	box-shadow: 0 10px 28px rgba(36, 48, 66, 0.06);
+	overflow: hidden;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	text-decoration: none;
+	height: 100%;
+}
+
+.kk-latest-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 16px 40px rgba(36, 48, 66, 0.11);
+}
+
+.kk-latest-card__thumb {
+	position: relative;
+	overflow: hidden;
+	height: 220px;
+	background: var(--kk-bg);
+}
+
+.kk-latest-card__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.4s ease;
+}
+
+.kk-latest-card:hover .kk-latest-card__thumb img {
+	transform: scale(1.05);
+}
+
+.kk-latest-card__badge {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	padding: 0.35rem 0.75rem;
+	border-radius: 999px;
+	background: rgba(114, 239, 178, 0.95);
+	color: #053c2a;
+	font-weight: 800;
+	font-size: 0.8rem;
+	letter-spacing: 0.05em;
+}
+
+.kk-latest-card__body {
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.kk-latest-card__category {
+	display: inline-block;
+	font-size: 0.75rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--kk-pink-dark);
+}
+
+.kk-latest-card__title {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	color: var(--kk-ink);
+	line-height: 1.3;
+}
+
+.kk-latest-card__cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: auto;
+	font-weight: 800;
+	font-size: 0.9rem;
+	color: var(--kk-blue);
+	text-decoration: none;
+	transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.kk-latest-card__cta:hover {
+	color: #07516a;
+	gap: 0.7rem;
+}
+
+.kk-latest-card__empty {
+	grid-column: 1 / -1;
+	text-align: center;
+	padding: 3rem;
+	color: var(--kk-muted);
+	font-size: 1.1rem;
+}
+
+/* --- Parents & Teachers Section --- */
+.kk-parents-teachers {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: linear-gradient(180deg, #fff, var(--kk-bg));
+}
+
+.kk-parents-teachers__grid {
+	display: grid;
+	grid-template-columns: 1fr 420px;
+	gap: 3rem;
+	align-items: center;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.kk-parents-teachers__text {
+	max-width: 560px;
+}
+
+.kk-parents-teachers__title {
+	margin: 0 0 1rem;
+	font-size: clamp(1.8rem, 4vw, 2.8rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+}
+
+.kk-parents-teachers__text > p {
+	margin: 0 0 1.5rem;
+	color: var(--kk-muted);
+	font-size: 1.05rem;
+	line-height: 1.7;
+}
+
+.kk-parents-teachers__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.kk-parents-teachers__list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	color: var(--kk-ink);
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+.kk-parents-teachers__list li strong {
+	color: var(--kk-pink-dark);
+	font-weight: 800;
+}
+
+.kk-parents-teachers__visual {
+	display: flex;
+	justify-content: center;
+}
+
+.kk-parents-teachers__illustration {
+	width: 100%;
+	max-width: 340px;
+}
+
+.kk-parents-teachers__caption {
+	margin-top: 1rem;
+	text-align: center;
+	color: var(--kk-muted);
+	font-size: 0.9rem;
+	font-style: italic;
+}
+
+/* --- SEO Content Section --- */
+.kk-seo-content {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: var(--kk-white);
+}
+
+.kk-seo-content__inner {
+	max-width: 880px;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.kk-seo-content__title {
+	margin: 0 0 0.75rem;
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+	text-align: center;
+}
+
+.kk-seo-content__lead {
+	margin: 0 0 2.5rem;
+	font-size: clamp(1rem, 2vw, 1.15rem);
+	color: var(--kk-muted);
+	line-height: 1.7;
+	text-align: center;
+	max-width: 720px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.kk-seo-content__inner h3 {
+	margin: 2rem 0 1rem;
+	font-size: clamp(1.5rem, 3vw, 2rem);
+	line-height: 1.3;
+	letter-spacing: -0.02em;
+	color: var(--kk-ink);
+}
+
+.kk-seo-content__inner h3:first-of-type {
+	margin-top: 0;
+}
+
+.kk-seo-content__inner p {
+	margin: 0 0 1.25rem;
+	color: var(--kk-muted);
+	font-size: 1.05rem;
+	line-height: 1.75;
+}
+
+.kk-seo-content__tips {
+	list-style: none;
+	margin: 0 0 2rem;
+	padding: 0;
+}
+
+.kk-seo-content__tips li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+	color: var(--kk-muted);
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+.kk-seo-content__tips li::before {
+	content: "✓";
+	flex-shrink: 0;
+	color: var(--kk-green);
+	font-weight: 900;
+	font-size: 1.1rem;
+}
+
+/* --- Newsletter Section --- */
+.kk-newsletter {
+	margin: 0;
+	padding: clamp(3rem, 8vw, 5rem) 0;
+	background: linear-gradient(135deg, rgba(255, 107, 157, 0.12), rgba(76, 201, 240, 0.10));
+}
+
+.kk-newsletter__wrap {
+	max-width: 1000px;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.kk-newsletter__card {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 3rem;
+	align-items: center;
+	border-radius: var(--kk-radius);
+	background: var(--kk-white);
+	border: 1px solid var(--kk-border);
+	box-shadow: 0 18px 45px rgba(255, 107, 157, 0.12);
+	overflow: hidden;
+}
+
+.kk-newsletter__content {
+	padding: 3rem 2.5rem;
+}
+
+.kk-newsletter__title {
+	margin: 0 0 0.75rem;
+	font-size: clamp(1.8rem, 4vw, 2.6rem);
+	line-height: 1.2;
+	letter-spacing: -0.04em;
+	color: var(--kk-ink);
+}
+
+.kk-newsletter__subtitle {
+	margin: 0 0 1.75rem;
+	font-size: clamp(1rem, 2vw, 1.15rem);
+	color: var(--kk-muted);
+	line-height: 1.7;
+}
+
+.kk-newsletter__form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	max-width: 400px;
+}
+
+.kk-newsletter__form input[type="email"] {
+	flex: 1;
+	min-width: 0;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 999px;
+	font-size: 1rem;
+	font-family: inherit;
+}
+
+.kk-newsletter__form input[type="email"]:focus {
+	outline: none;
+	border-color: var(--kk-pink);
+	box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.15);
+}
+
+.kk-newsletter__button {
+	width: fit-content;
+	padding: 0.9rem 1.5rem;
+}
+
+.kk-newsletter__note {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--kk-muted);
+	text-align: center;
+	line-height: 1.5;
+}
+
+.kk-newsletter__visual {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem;
+	background: linear-gradient(180deg, rgba(255, 107, 157, 0.06), rgba(76, 201, 240, 0.06));
+	border-top: 1px solid var(--kk-border);
+	border-bottom: 1px solid var(--kk-border);
+}
+
+.kk-newsletter__badge {
+	font-size: 3rem;
+	opacity: 0.8;
+	animation: kk-newsletter-bounce 2s ease-in-out infinite;
+}
+
+.kk-newsletter__badge:nth-child(2) { animation-delay: 0.3s; }
+.kk-newsletter__badge:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes kk-newsletter-bounce {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-10px); }
+}
+
+/* --- Responsive adjustments for new homepage --- */
+@media (max-width: 1024px) {
+	.kk-trust__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.kk-categories__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.kk-latest__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.kk-parents-teachers__grid {
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	.kk-parents-teachers__text {
+		max-width: 100%;
+	}
+
+	.kk-newsletter__card {
+		grid-template-columns: 1fr;
+	}
+
+	.kk-newsletter__visual {
+		display: none;
+	}
+
+	.kk-newsletter__content {
+		padding: 2rem 1.5rem;
+	}
+}
+
+@media (max-width: 640px) {
+	.kk-hero {
+		padding: clamp(2rem, 6vw, 4rem) 0;
+	}
+
+	.kk-hero__title {
+		font-size: clamp(2rem, 8vw, 3rem);
+	}
+
+	.kk-hero__actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.kk-hero__actions .kk-btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.kk-trust__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.kk-categories__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.kk-latest__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.kk-parents-teachers__grid {
+		gap: 1.5rem;
+	}
+
+	.kk-seo-content__inner {
+		padding: 0 1rem;
+	}
+
+	.kk-newsletter__card {
+		grid-template-columns: 1fr;
+	}
+
+	.kk-newsletter__content {
+		padding: 2rem 1.5rem;
+	}
+
+	.kk-newsletter__visual {
+		display: none;
+	}
+
+	.kk-newsletter__form {
+		flex-direction: column;
+	}
+}
 .page-id-78 main > .container,
 .privacy-policy main > .container {
 	max-width: 100% !important;

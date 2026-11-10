@@ -1,0 +1,892 @@
+/**
+ * Kinderkleurplaten Pinterest Admin Styles
+ */
+
+/* ==========================================================================
+   General Layout
+   ========================================================================== */
+
+.kk-pinterest-wrap {
+    max-width: 1200px;
+}
+
+.kk-pinterest-wrap h1 {
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.kk-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-bottom: 20px;
+}
+
+.kk-card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+}
+
+.kk-card-header h2,
+.kk-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.kk-card-body {
+    padding: 20px;
+}
+
+/* ==========================================================================
+   Dashboard Stats Grid
+   ========================================================================== */
+
+.kk-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.kk-stat-card {
+    text-align: center;
+    padding: 20px;
+    border-left: 4px solid #0073aa;
+}
+
+.kk-stat-card.success {
+    border-left-color: #46b450;
+}
+
+.kk-stat-card.error {
+    border-left-color: #dc3232;
+}
+
+.kk-stat-card.warning {
+    border-left-color: #ffb900;
+}
+
+.kk-stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.kk-stat-label {
+    font-size: 13px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Status Badges
+   ========================================================================== */
+
+.kk-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kk-status-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.kk-status-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.kk-status-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.kk-status-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* ==========================================================================
+   Quick Actions
+   ========================================================================== */
+
+.kk-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.kk-action-buttons .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ==========================================================================
+   Toolbar
+   ========================================================================== */
+
+.kk-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.kk-toolbar-left,
+.kk-toolbar-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.kk-search-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.kk-search-form input[type="search"] {
+    width: 250px;
+}
+
+.kk-search-form select {
+    min-width: 150px;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.kk-pinterest-wrap .wp-list-table th,
+.kk-pinterest-wrap .wp-list-table td {
+    vertical-align: middle;
+}
+
+.kk-board-id,
+.kk-pin-id {
+    font-size: 11px;
+    color: #999;
+    font-family: monospace;
+}
+
+.kk-privacy-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.kk-privacy-public {
+    background: #d4edda;
+    color: #155724;
+}
+
+.kk-privacy-secret {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.kk-privacy-protected {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.kk-default-star {
+    color: #ffb900;
+    cursor: default;
+}
+
+.kk-set-default {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #999;
+}
+
+.kk-set-default:hover {
+    color: #ffb900;
+}
+
+.kk-board-actions,
+.kk-history-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.kk-board-actions .button,
+.kk-history-actions .button {
+    padding: 4px 8px;
+    min-height: auto;
+}
+
+.kk-error-text {
+    font-family: monospace;
+    font-size: 11px;
+    color: #dc3232;
+    max-width: 200px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kk-action-badge {
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.kk-no-data {
+    text-align: center;
+    padding: 40px 20px !important;
+    color: #646970;
+}
+
+/* ==========================================================================
+   Form Styles
+   ========================================================================== */
+
+.kk-settings-form .form-table th {
+    width: 250px;
+}
+
+.kk-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.kk-form-col-1 {
+    grid-column: span 1;
+}
+
+.kk-form-col-2 {
+    grid-column: span 1;
+}
+
+@media (max-width: 782px) {
+    .kk-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group .required {
+    color: #dc3232;
+}
+
+.kk-form-submit {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.kk-form-submit .spinner {
+    float: none;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+/* ==========================================================================
+   Pin Preview
+   ========================================================================== */
+
+.kk-pin-preview {
+    margin-top: 15px;
+}
+
+.kk-preview-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 400px;
+    background: #fff;
+}
+
+.kk-preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.kk-preview-info {
+    padding: 15px;
+}
+
+.kk-preview-info h5 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.kk-preview-info p {
+    margin: 0;
+    color: #646970;
+}
+
+/* ==========================================================================
+   Post Search
+   ========================================================================== */
+
+.kk-post-search,
+.kk-bulk-post-search {
+    position: relative;
+}
+
+.kk-post-search .spinner,
+.kk-bulk-post-search .spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.kk-post-search-results,
+.kk-bulk-post-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.kk-post-result-item,
+.kk-bulk-post-result-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-top: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.kk-post-result-item:hover,
+.kk-bulk-post-result-item:hover {
+    background: #f6f7f7;
+}
+
+.kk-post-result-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.kk-post-result-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.kk-post-result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.kk-post-result-title {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kk-post-result-excerpt {
+    font-size: 12px;
+    color: #646970;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kk-selected-post-info {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.kk-selected-thumb {
+    width: 150px;
+    height: auto;
+    border-radius: 4px;
+}
+
+.kk-bulk-selected-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.kk-bulk-selected-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.kk-bulk-selected-item:last-child {
+    border-bottom: none;
+}
+
+.kk-bulk-selected-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+/* ==========================================================================
+   Bulk Progress
+   ========================================================================== */
+
+.kk-progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.kk-progress-fill {
+    height: 100%;
+    background: #0073aa;
+    transition: width 0.3s ease;
+}
+
+.kk-progress-log {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #f6f7f7;
+    border-radius: 4px;
+}
+
+.kk-progress-log li {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+.kk-progress-log li:last-child {
+    border-bottom: none;
+}
+
+.kk-progress-log .success {
+    color: #46b450;
+}
+
+.kk-progress-log .error {
+    color: #dc3232;
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.kk-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kk-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.5);
+}
+
+.kk-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: kk-modal-in 0.2s ease;
+}
+
+.kk-modal-large {
+    max-width: 800px;
+}
+
+@keyframes kk-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.kk-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.kk-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.kk-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #646970;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.kk-modal-close:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+}
+
+.kk-modal-body {
+    padding: 20px;
+}
+
+.kk-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+}
+
+/* ==========================================================================
+   Connection Status
+   ========================================================================== */
+
+.kk-connection-status .kk-status-badge {
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+.kk-connection-info .kk-status-indicator {
+    margin-bottom: 15px;
+}
+
+.kk-connection-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Tools Grid
+   ========================================================================== */
+
+.kk-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.kk-tool {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.kk-tool h4 {
+    margin: 0 0 8px;
+    font-size: 15px;
+}
+
+.kk-tool p {
+    margin: 0 0 15px;
+    color: #646970;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   Callback URL
+   ========================================================================== */
+
+.kk-callback-url {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.kk-callback-url code {
+    flex: 1;
+    background: #f0f0f1;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.kk-copy-callback {
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Image Preview
+   ========================================================================== */
+
+.kk-image-preview {
+    margin-top: 10px;
+}
+
+.kk-image-preview img {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   Error Detail Modal
+   ========================================================================== */
+
+.kk-error-pre {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    max-height: 400px;
+    overflow: auto;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ==========================================================================
+   Recent Activity / Pins
+   ========================================================================== */
+
+.kk-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kk-view-all {
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.kk-pins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.kk-pin-item {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.kk-pin-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.kk-pin-info {
+    padding: 10px;
+}
+
+.kk-pin-info h4 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.kk-pin-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+/* ==========================================================================
+   Sections List
+   ========================================================================== */
+
+.kk-sections-list .kk-section-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.kk-sections-list .kk-section-item:last-child {
+    border-bottom: none;
+}
+
+.kk-section-info h5 {
+    margin: 0 0 3px;
+    font-size: 14px;
+}
+
+.kk-section-info .description {
+    margin: 0;
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   Notices
+   ========================================================================== */
+
+.kk-pinterest-wrap .notice {
+    margin: 0 0 20px;
+}
+
+.kk-pinterest-wrap .notice-inline {
+    margin: 15px 0;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 782px) {
+    .kk-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .kk-search-form {
+        width: 100%;
+    }
+
+    .kk-search-form input[type="search"] {
+        flex: 1;
+    }
+
+    .kk-action-buttons .button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .kk-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .wp-list-table {
+        font-size: 12px;
+    }
+
+    .wp-list-table th,
+    .wp-list-table td {
+        padding: 8px 6px;
+    }
+
+    .kk-modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+}
+
+/* ==========================================================================
+   RTL Support
+   ========================================================================== */
+
+.rtl .kk-form-row {
+    direction: rtl;
+}
+
+.rtl .kk-post-search .spinner,
+.rtl .kk-bulk-post-search .spinner {
+    right: auto;
+    left: 10px;
+}
+
+.rtl .kk-board-actions,
+.rtl .kk-history-actions {
+    flex-direction: row-reverse;
+}
+
+.rtl .kk-modal-header {
+    flex-direction: row-reverse;
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .kk-pinterest-wrap .kk-toolbar,
+    .kk-pinterest-wrap .kk-action-buttons,
+    .kk-pinterest-wrap .button,
+    .kk-pinterest-wrap .spinner,
+    .kk-pinterest-wrap .kk-modal {
+        display: none !important;
+    }
+}

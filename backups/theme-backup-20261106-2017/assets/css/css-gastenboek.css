@@ -1,0 +1,165 @@
+.kk-gastenboek {
+	width: min(100% - 2rem, var(--kk-container));
+	margin-inline: auto;
+	display: grid;
+	gap: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.kk-gastenboek-form,
+.kk-gastenboek-entries {
+	border: 1px solid rgba(255, 107, 157, 0.18);
+	border-radius: var(--kk-radius);
+	background: rgba(255, 255, 255, 0.86);
+	box-shadow: var(--kk-shadow);
+}
+
+.kk-gastenboek-form {
+	padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.kk-gastenboek-form h2,
+.kk-gastenboek-entries h2 {
+	margin: 0 0 1.25rem;
+	color: var(--kk-ink);
+	font-size: clamp(1.5rem, 4vw, 2rem);
+	line-height: 1.1;
+	letter-spacing: -0.04em;
+}
+
+.kk-gastenboek-notice {
+	margin: 0 0 1.25rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid rgba(114, 239, 178, 0.5);
+	border-radius: 18px;
+	background: rgba(114, 239, 178, 0.18);
+	color: #1f6b3f;
+	font-weight: 800;
+}
+
+.kk-gastenboek-form__form {
+	display: grid;
+	gap: 1rem;
+}
+
+.kk-gastenboek-form__row {
+	display: grid;
+	gap: 0.45rem;
+}
+
+.kk-gastenboek-form__row label {
+	color: var(--kk-ink);
+	font-weight: 900;
+}
+
+.kk-gastenboek-form__row label span {
+	color: var(--kk-pink-dark);
+}
+
+.kk-gastenboek-form input,
+.kk-gastenboek-form select,
+.kk-gastenboek-form textarea {
+	width: 100%;
+	border: 1px solid var(--kk-border);
+	border-radius: 18px;
+	background: var(--kk-white);
+	color: var(--kk-ink);
+	font: inherit;
+	outline: none;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kk-gastenboek-form input,
+.kk-gastenboek-form select {
+	min-height: 48px;
+	padding: 0.7rem 0.9rem;
+}
+
+.kk-gastenboek-form textarea {
+	resize: vertical;
+	padding: 0.9rem;
+}
+
+.kk-gastenboek-form input:focus,
+.kk-gastenboek-form select:focus,
+.kk-gastenboek-form textarea:focus {
+	border-color: var(--kk-pink);
+	box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.18);
+}
+
+.kk-gastenboek-form__form .button {
+	width: fit-content;
+	margin-top: 0.35rem;
+}
+
+.kk-gastenboek-entries {
+	padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.kk-gastenboek-list {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.kk-gastenboek-entry {
+	padding: 1.15rem;
+	border: 1px solid var(--kk-border);
+	border-radius: 22px;
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 248, 251, 0.95));
+}
+
+.kk-gastenboek-entry__header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.75rem;
+	align-items: baseline;
+	justify-content: space-between;
+	margin-bottom: 0.65rem;
+}
+
+.kk-gastenboek-entry__author {
+	min-width: 0;
+}
+
+.kk-gastenboek-entry__age,
+.kk-gastenboek-entry__date {
+	color: var(--kk-muted);
+	font-size: 0.92rem;
+}
+
+.kk-gastenboek-entry__rating {
+	margin-bottom: 0.75rem;
+	letter-spacing: 0.08em;
+}
+
+.kk-gastenboek-entry__content {
+	color: var(--kk-ink);
+	line-height: 1.65;
+}
+
+.kk-gastenboek-entry__content p {
+	margin: 0;
+}
+
+.kk-gastenboek-no-entries {
+	margin: 0;
+	padding: 1rem;
+	border-radius: 18px;
+	background: rgba(255, 209, 102, 0.2);
+	color: var(--kk-muted);
+}
+
+@media (max-width: 760px) {
+	.kk-gastenboek-form,
+	.kk-gastenboek-entries {
+		border-radius: 22px;
+	}
+
+	.kk-gastenboek-list {
+		grid-template-columns: 1fr;
+	}
+
+	.kk-gastenboek-form__form .button {
+		width: 100%;
+	}
+}

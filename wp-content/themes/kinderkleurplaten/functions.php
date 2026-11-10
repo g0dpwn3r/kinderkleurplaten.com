@@ -239,7 +239,7 @@ function kk_register_post_types_and_taxonomies() {
 			'menu_icon'          => 'dashicons-images-alt2',
 			'show_in_rest'       => true,
 			'rest_base'          => 'kleurplaten',
-			'supports'           => array('title', 'thumbnail', 'custom-fields'),
+			'supports'           => array('title', 'editor', 'thumbnail', 'custom-fields'),
 		));
 	}
 

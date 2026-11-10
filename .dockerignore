@@ -1,0 +1,34 @@
+# Geheimen en ontwikkelbestanden uitsluiten van de Docker-buildcontext
+.env
+.env.*
+!.env.example
+
+.git
+.git/**
+.gitignore
+
+docker-compose.yml
+docker-compose.*.yml
+
+*.sql
+*.sql.gz
+*.bak
+*.backup
+*.dump
+*.log
+
+# Lokale afhankelijkheden en buildartefacten
+node_modules
+vendor
+.next
+dist
+coverage
+
+# Lokale editorbestanden
+.vscode
+.idea
+
+# Python
+.venv
+__pycache__
+*.pyc
