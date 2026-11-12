@@ -196,45 +196,48 @@ get_header();
 					</div>
 					<div class="kk-categories__grid">
 						<?php
-						$categories = kk_get_all_categories_with_links();
+						$categories = get_terms(array(
+							'taxonomy'   => 'kleurplaat_categorie',
+							'hide_empty' => true,
+							'orderby'    => 'count',
+							'order'      => 'DESC',
+							'number'     => 8,
+						));
 						$category_icons = array(
-							'Dieren'              => '&#128054;',
-							'Prinsessen'          => '&#128096;',
-							'Dinosaurussen'       => '&#128003;',
-							'Voertuigen'          => '&#128689;',
-							'Feestdagen'          => '&#127873;',
-							'Seizoenen'           => '&#127784;',
-							'Educatief'           => '&#128215;',
-							'Fantasie'            => '&#128009;',
-							'Sprookjes'           => '&#128008;',
-							'Bekende Helden'      => '&#128127;',
+							'Dieren'                => '&#128054;',
+							'Prinsessen'            => '&#128096;',
+							'Dinosaurussen'         => '&#128003;',
+							'Voertuigen'            => '&#128689;',
+							'Feestdagen'            => '&#127873;',
+							'Seizoenen'             => '&#127784;',
+							'Educatief'             => '&#128215;',
+							'Fantasie'              => '&#128009;',
+							'Sprookjes'             => '&#128008;',
+							'Bekende Helden'        => '&#128127;',
+							'Gevoelens & Emoties'   => '&#128522;',
+							'Muziek & Geluid'       => '&#127911;',
+							'Natuur & Planten'      => '&#127794;',
+							'Sport & Bewegen'       => '&#2697;',
+							'Voedsel'               => '&#127828;',
+							'Ruimte'                => '&#128640;',
 						);
 
-						$display_categories = array_slice($categories, 0, 8);
-						if (empty($display_categories)) {
-							$display_categories = array(
-								array('name' => 'Dieren', 'slug' => 'dieren', 'url' => home_url('/kleurplaat-categorie/dieren'), 'count' => 0),
-								array('name' => 'Prinsessen', 'slug' => 'prinsessen', 'url' => home_url('/kleurplaat-categorie/prinsessen'), 'count' => 0),
-								array('name' => 'Dinosaurussen', 'slug' => 'dinosaurussen', 'url' => home_url('/kleurplaat-categorie/dinosaurussen'), 'count' => 0),
-								array('name' => 'Voertuigen', 'slug' => 'voertuigen', 'url' => home_url('/kleurplaat-categorie/voertuigen'), 'count' => 0),
-								array('name' => 'Feestdagen', 'slug' => 'feestdagen', 'url' => home_url('/kleurplaat-categorie/feestdagen'), 'count' => 0),
-								array('name' => 'Seizoenen', 'slug' => 'seizoenen', 'url' => home_url('/kleurplaat-categorie/seizoenen'), 'count' => 0),
-								array('name' => 'Educatief', 'slug' => 'educatief', 'url' => home_url('/kleurplaat-categorie/educatief'), 'count' => 0),
-								array('name' => 'Fantasie', 'slug' => 'fantasie', 'url' => home_url('/kleurplaat-categorie/fantasie'), 'count' => 0),
-							);
+						if (empty($categories) || is_wp_error($categories)) {
+							echo '<p class="kk-categories__empty">We zijn bezig met het toevoegen van nieuwe kleurplaten in deze categorieën. Kom binnenkort terug!</p>';
+						} else {
+							foreach ($categories as $cat) :
+								$icon = isset($category_icons[$cat->name]) ? $category_icons[$cat->name] : '&#127753;';
+								$count = isset($cat->count) && $cat->count > 0 ? (int) $cat->count : 0;
+								$count_text = $count > 0 ? sprintf(_n('%d kleurplaat', '%d kleurplaten', $count, 'kinderkleurplaten'), $count) : 'Binnenkort beschikbaar';
+							?>
+							<a href="<?php echo esc_url(get_term_link($cat)); ?>" class="kk-category-card">
+								<div class="kk-category-card__icon"><?php echo $icon; // HTML entities from trusted array ?></div>
+								<h3 class="kk-category-card__title"><?php echo esc_html($cat->name); ?></h3>
+								<p class="kk-category-card__count"><?php echo esc_html($count_text); ?></p>
+							</a>
+							<?php endforeach;
 						}
-
-						foreach ($display_categories as $cat) :
-							$icon = isset($category_icons[$cat['name']]) ? $category_icons[$cat['name']] : '&#127753;';
-							$count = isset($cat['count']) && $cat['count'] > 0 ? (int) $cat['count'] : 0;
-							$count_text = $count > 0 ? sprintf(_n('%d kleurplaat', '%d kleurplaten', $count, 'kinderkleurplaten'), $count) : 'Binnenkort beschikbaar';
 						?>
-						<a href="<?php echo esc_url($cat['url']); ?>" class="kk-category-card">
-							<div class="kk-category-card__icon"><?php echo $icon; // HTML entities from trusted array ?></div>
-							<h3 class="kk-category-card__title"><?php echo esc_html($cat['name']); ?></h3>
-							<p class="kk-category-card__count"><?php echo esc_html($count_text); ?></p>
-						</a>
-						<?php endforeach; ?>
 					</div>
 				</div>
 			</section>

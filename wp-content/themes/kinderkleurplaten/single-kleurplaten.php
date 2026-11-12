@@ -187,24 +187,43 @@ get_header(); ?>
 				<p class="kk-single-section-content"><?php echo esc_html__('Deze kleurplaat helpt kinderen bij het ontwikkelen van fijne motoriek, kleurherkenning, concentratie en creativiteit. Ideaal om thuis of in de klas te gebruiken!', 'kinderkleurplaten'); ?></p>
 			</section>
 
-			<?php if (!empty($categories) && !is_wp_error($categories)) : ?>
-				<?php $first_category = reset($categories); ?>
-				<?php $factoids = kk_get_category_factoids($first_category->name); ?>
-				<section class="kk-single-section kk-single-section-facts">
-					<h2 class="kk-single-section-title"><?php echo esc_html__('Leuke weetjes & Feitjes', 'kinderkleurplaten'); ?></h2>
-					<p class="kk-single-section-content"><?php echo esc_html__('Over het onderwerp "' . esc_html($first_category->name) . '" kunt u met kinderen leuke gesprekken voeren terwijl ze aan deze kleurplaat werken:', 'kinderkleurplaten'); ?></p>
+			<?php
+			$kk_weetjes = get_post_meta(get_the_ID(), 'kk_weetjes', true);
+			$kk_custom_weetjes = array();
+			if (!empty($kk_weetjes) && is_string($kk_weetjes)) {
+				$kk_custom_weetjes = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $kk_weetjes)), 'strlen');
+				$kk_custom_weetjes = array_values($kk_custom_weetjes);
+			}
+			?>
+			<section class="kk-single-section kk-single-section-facts">
+				<h2 class="kk-single-section-title"><?php echo esc_html__('Leuke weetjes & Feitjes', 'kinderkleurplaten'); ?></h2>
+				<?php if (!empty($kk_custom_weetjes)) : ?>
+					<p class="kk-single-section-content"><?php echo esc_html__('Over het onderwerp van deze kleurplaat kunt u met kinderen leuke gesprekjes voeren terwijl ze aan deze kleurplaat werken:', 'kinderkleurplaten'); ?></p>
 					<ul class="kk-single-section-content kk-factoids-list">
-						<?php foreach ($factoids as $factoid) : ?>
-							<li><?php echo esc_html($factoid); ?></li>
+						<?php foreach ($kk_custom_weetjes as $kk_weetje) : ?>
+							<li><?php echo esc_html($kk_weetje); ?></li>
 						<?php endforeach; ?>
 					</ul>
-				</section>
-			<?php else : ?>
-				<section class="kk-single-section kk-single-section-facts">
-					<h2 class="kk-single-section-title"><?php echo esc_html__('Leuke weetjes & Feitjes', 'kinderkleurplaten'); ?></h2>
+				<?php elseif (!empty($categories) && !is_wp_error($categories)) : ?>
+					<?php
+					$first_category = reset($categories);
+					$factoids = kk_get_category_factoids($first_category->name);
+					?>
+					<p class="kk-single-section-content"><?php printf(esc_html__('Over het onderwerp "%s" kunt u met kinderen leuke gesprekken voeren terwijl ze aan deze kleurplaat werken:', 'kinderkleurplaten'), esc_html($first_category->name)); ?></p>
+					<?php if (!empty($factoids)) : ?>
+						<ul class="kk-single-section-content kk-factoids-list">
+							<?php foreach ($factoids as $factoid) : ?>
+								<li><?php echo esc_html($factoid); ?></li>
+							<?php endforeach; ?>
+						</ul>
+					<?php else : ?>
+						<p class="kk-single-section-content"><?php echo esc_html__('Kleurplaten zijn een geweldige manier om met kinderen te praten over kleuren, vormen en creativiteit.', 'kinderkleurplaten'); ?></p>
+					<?php endif; ?>
+				<?php else : ?>
 					<p class="kk-single-section-content"><?php echo esc_html__('Terwijl kinderen kleuren, kunt u leuke gesprekjes voeren over het thema van deze kleurplaat.', 'kinderkleurplaten'); ?></p>
-				</section>
-			<?php endif; ?>
+					<p class="kk-single-section-content"><?php echo esc_html__('Kleurplaten zijn een geweldige manier om met kinderen te praten over kleuren, vormen en creativiteit.', 'kinderkleurplaten'); ?></p>
+				<?php endif; ?>
+			</section>
 
 			<section class="kk-single-section kk-single-section-tips">
 				<h2 class="kk-single-section-title"><?php echo esc_html__('Print- en Kleurtips voor Ouders & Leraren', 'kinderkleurplaten'); ?></h2>

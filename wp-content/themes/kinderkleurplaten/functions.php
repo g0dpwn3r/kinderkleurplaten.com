@@ -497,6 +497,82 @@ function kk_save_featured_metabox($post_id) {
 }
 
 /**
+ * Add meta box for per-post unique facts ("weetjes") to kleurplaten post type.
+ */
+add_action('add_meta_boxes', 'kk_add_weetjes_meta_box');
+function kk_add_weetjes_meta_box() {
+    add_meta_box(
+        'kk_weetjes_metabox',
+        __('Unieke weetjes & Feitjes', 'kinderkleurplaten'),
+        'kk_weetjes_metabox_callback',
+        'kleurplaten',
+        'side',
+        'high'
+    );
+}
+
+function kk_weetjes_metabox_callback($post) {
+    wp_nonce_field('kk_weetjes_meta_box', 'kk_weetjes_meta_box_nonce');
+    $weetjes = get_post_meta($post->ID, 'kk_weetjes', true);
+    ?>
+    <p>
+        <label for="kk_weetjes" style="display: block; font-weight: 600; margin-bottom: 6px;">
+            <?php esc_html_e('Unieke weetjes & Feitjes (per kleurplaat)', 'kinderkleurplaten'); ?>
+        </label>
+        <textarea
+            name="kk_weetjes"
+            id="kk_weetjes"
+            rows="10"
+            style="width: 100%; box-sizing: border-box; font-family: inherit; font-size: 13px; line-height: 1.5; padding: 8px;"
+            placeholder="<?php esc_attr_e('Eén weetje per regel...', 'kinderkleurplaten'); ?>"
+        ><?php echo esc_textarea($weetjes); ?></textarea>
+    </p>
+    <p class="description" style="margin-top: 8px; font-size: 12px; color: #666;">
+        <?php esc_html_e('Vul hier unieke weetjes in voor deze specifieke kleurplaat. Eén weetje per regel. Laat leeg om de category-gebaseerde weetjes te gebruiken.', 'kinderkleurplaten'); ?>
+    </p>
+    <?php
+}
+
+add_action('save_post_kleurplaten', 'kk_save_weetjes_meta');
+function kk_save_weetjes_meta($post_id) {
+    if (!isset($_POST['kk_weetjes_meta_box_nonce']) || !wp_verify_nonce($_POST['kk_weetjes_meta_box_nonce'], 'kk_weetjes_meta_box')) {
+        return;
+    }
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    $weetjes = isset($_POST['kk_weetjes']) ? sanitize_textarea_field(wp_unslash($_POST['kk_weetjes'])) : '';
+    update_post_meta($post_id, 'kk_weetjes', $weetjes);
+}
+
+/**
+ * Register REST API field for kk_weetjes meta.
+ */
+add_action('rest_api_init', 'kk_register_weetjes_rest_field');
+function kk_register_weetjes_rest_field() {
+    register_rest_field(
+        'kleurplaten',
+        'kk_weetjes',
+        array(
+            'get_callback' => function ($post_array) {
+                return get_post_meta($post_array['id'], 'kk_weetjes', true);
+            },
+            'update_callback' => null,
+            'schema' => array(
+                'description' => __('Unieke weetjes & Feitjes voor deze kleurplaat.', 'kinderkleurplaten'),
+                'type'        => 'string',
+                'context'     => array('view', 'edit'),
+            ),
+        )
+    );
+}
+
+
+/**
  * Shortcode: [kleurplaten_uitgelicht] — toont uitgelichte kleurplaten.
  * Attributen:
  *  - limit (int) Aantal kleurplaten (default: 4)
